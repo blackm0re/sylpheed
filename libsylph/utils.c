@@ -3306,10 +3306,10 @@ gint canonicalize_file(const gchar *src, const gchar *dest)
 		}
 	}
 
-	if (last_linebreak == TRUE) {
-		if (fputs("\r\n", dest_fp) == EOF)
-			err = TRUE;
-	}
+	/* if (last_linebreak == TRUE) { */
+	/* 	if (fputs("\r\n", dest_fp) == EOF) */
+	/* 		err = TRUE; */
+	/* } */
 
 	if (ferror(src_fp)) {
 		FILE_OP_ERROR(src, "fgets");
