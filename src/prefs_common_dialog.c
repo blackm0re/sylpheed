@@ -205,6 +205,7 @@ static struct JunkMail {
 static struct Privacy {
 	GtkWidget *checkbtn_auto_check_signatures;
 	GtkWidget *checkbtn_gpg_signature_popup;
+	GtkWidget *radiobtn_gpg_signature_all;
 	GtkWidget *checkbtn_store_passphrase;
 	GtkWidget *spinbtn_store_passphrase;
 	GtkObject *spinbtn_store_passphrase_adj;
@@ -313,6 +314,13 @@ static void prefs_common_attach_toolbtn_pos_set_radiobtn	   (PrefParam *pparam);
 
 static void prefs_common_online_mode_set_data_from_radiobtn(PrefParam *pparam);
 static void prefs_common_online_mode_set_radiobtn	   (PrefParam *pparam);
+
+#if USE_GPGME
+static void prefs_common_gpg_signature_popup_mode_set_data_from_radiobtn(
+	PrefParam *pparam);
+static void prefs_common_gpg_signature_popup_mode_set_radiobtn(
+	PrefParam *pparam);
+#endif
 
 static PrefsUIData ui_data[] = {
 	/* Receive */
@@ -540,6 +548,9 @@ static PrefsUIData ui_data[] = {
 	 prefs_set_data_from_toggle, prefs_set_toggle},
 	{"gpg_signature_popup", &privacy.checkbtn_gpg_signature_popup,
 	 prefs_set_data_from_toggle, prefs_set_toggle},
+	{"gpg_signature_popup_mode", &privacy.radiobtn_gpg_signature_all,
+	 prefs_common_gpg_signature_popup_mode_set_data_from_radiobtn,
+	 prefs_common_gpg_signature_popup_mode_set_radiobtn},
 	{"store_passphrase", &privacy.checkbtn_store_passphrase,
 	 prefs_set_data_from_toggle, prefs_set_toggle},
 	{"store_passphrase_timeout", &privacy.spinbtn_store_passphrase,
@@ -2478,10 +2489,14 @@ static void prefs_privacy_create(void)
 	GtkWidget *vbox2;
 	GtkWidget *vbox3;
 	GtkWidget *hbox1;
+	GtkWidget *vbox_sign_popup_mode;
+	GtkWidget *hbox_sign_popup_mode;
 	GtkWidget *hbox_spc;
 	GtkWidget *label;
 	GtkWidget *checkbtn_auto_check_signatures;
 	GtkWidget *checkbtn_gpg_signature_popup;
+	GtkWidget *radiobtn_gpg_signature_all;
+	GtkWidget *radiobtn_gpg_signature_bad;
 	GtkWidget *checkbtn_store_passphrase;
 	GtkObject *spinbtn_store_passphrase_adj;
 	GtkWidget *spinbtn_store_passphrase;
@@ -2504,6 +2519,56 @@ static void prefs_privacy_create(void)
 
 	PACK_CHECK_BUTTON (vbox2, checkbtn_gpg_signature_popup,
 			   _("Show signature check result in a popup window"));
+
+	vbox_sign_popup_mode = gtk_vbox_new (FALSE, VSPACING_NARROW);
+	gtk_widget_show (vbox_sign_popup_mode);
+	gtk_box_pack_start (GTK_BOX (vbox2), vbox_sign_popup_mode, FALSE, FALSE, 0);
+
+	hbox_sign_popup_mode = gtk_hbox_new (FALSE, 8);
+	gtk_widget_show (hbox_sign_popup_mode);
+	gtk_box_pack_start (GTK_BOX (vbox_sign_popup_mode),
+						hbox_sign_popup_mode,
+						FALSE,
+						FALSE,
+						0);
+
+	hbox_spc = gtk_hbox_new (FALSE, 0);
+	gtk_widget_show (hbox_spc);
+	gtk_box_pack_start (GTK_BOX (hbox_sign_popup_mode),
+						hbox_spc,
+						FALSE,
+						FALSE,
+						0);
+	gtk_widget_set_size_request (hbox_spc, 12, -1);
+
+	radiobtn_gpg_signature_all = gtk_radio_button_new_with_label(
+		NULL,
+		_("All signatures"));
+	gtk_widget_show(radiobtn_gpg_signature_all);
+	gtk_box_pack_start(GTK_BOX (hbox_sign_popup_mode),
+					   radiobtn_gpg_signature_all,
+					   FALSE,
+					   FALSE,
+					   0);
+	g_object_set_data(G_OBJECT (radiobtn_gpg_signature_all),
+					  MENU_VAL_ID,
+					  GINT_TO_POINTER (1));
+
+	radiobtn_gpg_signature_bad = gtk_radio_button_new_with_label_from_widget(
+		GTK_RADIO_BUTTON (radiobtn_gpg_signature_all),
+		_("Bad signatures only"));
+	gtk_widget_show(radiobtn_gpg_signature_bad);
+	gtk_box_pack_start(GTK_BOX (hbox_sign_popup_mode),
+					   radiobtn_gpg_signature_bad,
+					   FALSE,
+					   FALSE,
+					   0);
+	g_object_set_data(G_OBJECT (radiobtn_gpg_signature_bad),
+					  MENU_VAL_ID,
+					  GINT_TO_POINTER (0));
+
+	SET_TOGGLE_SENSITIVITY (checkbtn_gpg_signature_popup,
+							hbox_sign_popup_mode);
 
 	PACK_CHECK_BUTTON (vbox2, checkbtn_store_passphrase,
 			   _("Store passphrase in memory temporarily"));
@@ -2572,7 +2637,8 @@ static void prefs_privacy_create(void)
 					     = checkbtn_auto_check_signatures;
 	privacy.checkbtn_gpg_signature_popup
 					     = checkbtn_gpg_signature_popup;
-	privacy.checkbtn_store_passphrase    = checkbtn_store_passphrase;
+	privacy.radiobtn_gpg_signature_all = radiobtn_gpg_signature_all;
+	privacy.checkbtn_store_passphrase	 = checkbtn_store_passphrase;
 	privacy.spinbtn_store_passphrase     = spinbtn_store_passphrase;
 	privacy.spinbtn_store_passphrase_adj = spinbtn_store_passphrase_adj;
 #ifndef G_OS_WIN32
@@ -4718,6 +4784,60 @@ static void prefs_common_online_mode_set_radiobtn(PrefParam *pparam)
 		group = group->next;
 	}
 }
+
+#if USE_GPGME
+static void prefs_common_gpg_signature_popup_mode_set_data_from_radiobtn(
+	PrefParam *pparam)
+{
+	PrefsUIData *ui_data;
+	GtkRadioButton *radiobtn;
+	GSList *group;
+
+	ui_data = (PrefsUIData *)pparam->ui_data;
+	g_return_if_fail(ui_data != NULL);
+	g_return_if_fail(*ui_data->widget != NULL);
+
+	radiobtn = GTK_RADIO_BUTTON(*ui_data->widget);
+	group = gtk_radio_button_get_group(radiobtn);
+	while (group != NULL) {
+		GtkToggleButton *btn = GTK_TOGGLE_BUTTON(group->data);
+
+		if (gtk_toggle_button_get_active(btn)) {
+			prefs_common.gpg_signature_popup_mode =
+				GPOINTER_TO_INT(g_object_get_data(G_OBJECT(btn), MENU_VAL_ID));
+			break;
+		}
+		group = group->next;
+	}
+}
+
+static void prefs_common_gpg_signature_popup_mode_set_radiobtn(
+	PrefParam *pparam)
+{
+	PrefsUIData *ui_data;
+	GtkRadioButton *radiobtn;
+	GSList *group;
+
+	ui_data = (PrefsUIData *)pparam->ui_data;
+	g_return_if_fail(ui_data != NULL);
+	g_return_if_fail(*ui_data->widget != NULL);
+
+	radiobtn = GTK_RADIO_BUTTON(*ui_data->widget);
+	group = gtk_radio_button_get_group(radiobtn);
+	while (group != NULL) {
+		GtkToggleButton *btn = GTK_TOGGLE_BUTTON(group->data);
+		gint data;
+
+		data = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(btn),
+							 MENU_VAL_ID));
+		if (data == prefs_common.gpg_signature_popup_mode) {
+			gtk_toggle_button_set_active(btn, TRUE);
+			break;
+		}
+		group = group->next;
+	}
+}
+#endif
 
 static void prefs_common_dispitem_clicked(void)
 {

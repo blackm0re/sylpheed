@@ -243,6 +243,7 @@ struct _PrefsCommon
 	/* Privacy */
 	gboolean auto_check_signatures;
 	gboolean gpg_signature_popup;
+	gint gpg_signature_popup_mode;
 	gboolean store_passphrase;
 	gint store_passphrase_timeout;
 	gboolean passphrase_grab;

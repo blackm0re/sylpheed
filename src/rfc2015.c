@@ -210,8 +210,12 @@ static void check_signature(MimeInfo *mimeinfo, MimeInfo *partinfo, FILE *fp)
 	gchar *tmp_file;
 	gint n_exclude_chars = 0;
 
-	if (prefs_common.gpg_signature_popup)
+	if (prefs_common.gpg_signature_popup &&
+		prefs_common.gpg_signature_popup_mode == 1)
+	{
+		/* FIXME: Perhaps some macro instead of 1 */
 		statuswindow = gpgmegtk_sig_status_create();
+	}
 
 	err = gpgme_new(&ctx);
 	if (err) {
@@ -309,8 +313,21 @@ leave:
 		result = _("Error verifying the signature");
 	}
 	debug_print("verification status: %s\n", result);
-	if (prefs_common.gpg_signature_popup)
+	if (prefs_common.gpg_signature_popup &&
+        prefs_common.gpg_signature_popup_mode == 1)
+    {
+        /* FIXME: Perhaps some macro instead of 1 */
 		gpgmegtk_sig_status_update(statuswindow, ctx);
+	} else if (prefs_common.gpg_signature_popup &&
+			   verifyresult->signatures->status != GPG_ERR_NO_DATA &&
+			   verifyresult->signatures->status != GPG_ERR_NO_ERROR)
+	{
+		/* prefs_common.gpg_signature_popup_mode == 0 is useless as long as
+		 * there are only two modes (0 and 1)
+		 */
+		statuswindow = gpgmegtk_sig_status_create();
+		gpgmegtk_sig_status_update(statuswindow, ctx);
+	}
 
 	g_free (partinfo->sigstatus);
 	partinfo->sigstatus = g_strdup (result);
@@ -319,8 +336,11 @@ leave:
 	gpgme_data_release(text);
 	if (ctx)
 		gpgme_release(ctx);
-	if (prefs_common.gpg_signature_popup)
+	if (prefs_common.gpg_signature_popup) {
+		/* gpgmegtk_sig_status_destroy handles NULL params so no complicated
+		   check is needed */
 		gpgmegtk_sig_status_destroy(statuswindow);
+	}
 }
 
 /*
@@ -427,7 +447,11 @@ static gpgme_data_t pgp_decrypt(MsgInfo *msginfo, MimeInfo *partinfo, FILE *fp)
 		debug_print("verification status: %s\n", result);
 		debug_print("full status: %s\n",
 			    msginfo->encinfo->sigstatus_full);
-		if (prefs_common.gpg_signature_popup) {
+		if (prefs_common.gpg_signature_popup &&
+			((prefs_common.gpg_signature_popup_mode == 1) ||
+			 (verifyresult->signatures->status != GPG_ERR_NO_DATA &&
+			  verifyresult->signatures->status != GPG_ERR_NO_ERROR)))
+		{
 			GpgmegtkSigStatus statuswindow;
 			statuswindow = gpgmegtk_sig_status_create();
 			gpgmegtk_sig_status_update(statuswindow, ctx);

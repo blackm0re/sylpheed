@@ -406,6 +406,8 @@ static PrefParam param[] = {
 	 P_BOOL},
 	{"gpg_signature_popup", "FALSE", &prefs_common.gpg_signature_popup,
 	 P_BOOL},
+	{"gpg_signature_popup_mode", "1", &prefs_common.gpg_signature_popup_mode,
+	 P_INT},
 	{"store_passphrase", "FALSE", &prefs_common.store_passphrase, P_BOOL},
 	{"store_passphrase_timeout", "0",
 	 &prefs_common.store_passphrase_timeout, P_INT},
