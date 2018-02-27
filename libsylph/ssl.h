@@ -32,8 +32,14 @@
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include "socket.h"
+
+#define RC_OK 0
+#define RC_ERROR -1
+#define RC_WRONG_HASH_OR_KEY 1
 
 typedef enum {
 	SSL_METHOD_SSLv23,
@@ -60,6 +66,20 @@ void ssl_done_socket			(SockInfo	*sockinfo);
 
 void ssl_set_verify_func		(SSLVerifyFunc	 func);
 
+/* master password related code */
+gint encrypt_data(gchar **encrypted,
+                  gint *length_encrypted,
+                  const gchar *data,
+                  const gchar *passphrase,
+                  gint length_data,
+                  guint min_data_length,
+                  gboolean rnd_salt);
+
+gint decrypt_data(gchar **decrypted,
+                  const gchar *data,
+                  const gchar *passphrase,
+                  gint length_data);
+/* ---------------------------- */
 #endif /* USE_SSL */
 
 #endif /* __SSL_H__ */

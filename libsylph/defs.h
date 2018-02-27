@@ -58,6 +58,9 @@
 #define DISPLAY_HEADER_RC	"dispheaderrc"
 #define MENU_RC			"menurc"
 #define ACTIONS_RC		"actionsrc"
+#ifdef USE_SSL
+#define SECURE_RC "securerc"
+#endif
 #define COMMAND_HISTORY		"command_history"
 #define TEMPLATE_DIR		"templates"
 #define TMP_DIR			"tmp"

@@ -707,7 +707,17 @@ static gint imap_session_connect(IMAPSession *session)
 	log_message(_("creating IMAP4 connection to %s:%d ...\n"),
 		    SESSION(session)->server, SESSION(session)->port);
 
-	pass = account->passwd;
+    if (account->master_password != NULL) {
+        if (decrypt_data(&pass,
+                         account->passwd,
+                         account->master_password,
+                         strlen(account->passwd)) != RC_OK) {
+            session_destroy(session);
+            return -1;
+        }
+    } else {
+        pass = account->passwd;
+    }
 	if (!pass)
 		pass = account->tmp_pass;
 	if (!pass) {

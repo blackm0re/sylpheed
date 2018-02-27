@@ -218,6 +218,7 @@ void prefs_account_read_config(PrefsAccount *ac_prefs, const gchar *label)
 	g_free(rcpath);
 
 	*ac_prefs = tmp_ac_prefs;
+    ac_prefs->master_password = NULL;
 	while (*p && !g_ascii_isdigit(*p)) p++;
 	id = atoi(p);
 	if (id < 0) g_warning("wrong account id: %d\n", id);
