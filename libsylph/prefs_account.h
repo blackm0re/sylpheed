@@ -188,7 +188,7 @@ struct _PrefsAccount
 	gchar *sig_names[10];
 	gchar *sig_texts[10];
 
-    gchar *master_password;
+	gchar *master_password;
 };
 
 PrefsAccount *prefs_account_new		(void);

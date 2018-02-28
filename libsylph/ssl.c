@@ -534,7 +534,7 @@ gint encrypt_data(gchar **encrypted,
     EVP_DigestFinal_ex(mdctx, hash_buffer, NULL);
 
     length_cleartext = length_hash + length_data_payload;
-    
+
     cleartext_buffer = OPENSSL_malloc(length_cleartext);
     OPENSSL_cleanse(cleartext_buffer, length_cleartext);
 

@@ -84,7 +84,7 @@ void account_read_config_all(void)
 		ac_prefs = prefs_account_new();
 		prefs_account_read_config(ac_prefs, (gchar *)cur->data);
 #if USE_SSL
-        ac_prefs->master_password = master_password;
+		ac_prefs->master_password = master_password;
 #endif
 		account_list = g_list_append(account_list, ac_prefs);
 		if (ac_prefs->is_default)
