@@ -415,8 +415,12 @@ static PrefParam param[] = {
 #ifdef G_OS_WIN32
 	{"show_gpg_warning", "FALSE", &prefs_common.gpg_warning, P_BOOL},
 #else
-	{"show_gpg_warning", "TRUE", &prefs_common.gpg_warning, P_BOOL},
+    {"show_gpg_warning", "TRUE", &prefs_common.gpg_warning, P_BOOL},
 #endif
+
+	/* Master password */
+	{"use_master_password", "FALSE", &prefs_common.use_master_password,
+	P_BOOL},
 
 	/* Interface */
 	{"separate_folder", "FALSE", &prefs_common.sep_folder, P_BOOL},

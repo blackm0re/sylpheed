@@ -249,6 +249,9 @@ struct _PrefsCommon
 	gboolean passphrase_grab;
 	gboolean gpg_warning;
 
+	/* Master password */
+	gboolean use_master_password;
+
 	/* Interface */
 	gboolean sep_folder;
 	gboolean sep_msg;

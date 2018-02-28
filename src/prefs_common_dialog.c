@@ -216,6 +216,12 @@ static struct Privacy {
 } privacy;
 #endif
 
+#if USE_SSL
+static struct MasterPassword {
+	GtkWidget *checkbtn_use_master_password;
+} master_password;
+#endif
+
 static struct Interface {
 	GtkWidget *checkbtn_always_show_msg;
 	GtkWidget *checkbtn_always_mark_read;
@@ -563,6 +569,11 @@ static PrefsUIData ui_data[] = {
 	 prefs_set_data_from_toggle, prefs_set_toggle},
 #endif /* USE_GPGME */
 
+#if USE_SSL
+	{"use_master_password", &master_password.checkbtn_use_master_password,
+	 prefs_set_data_from_toggle, prefs_set_toggle},
+#endif
+
 	/* Interface */
 	{"always_show_message_when_selected",
 	 &iface.checkbtn_always_show_msg,
@@ -692,6 +703,9 @@ static void prefs_common_colorlabel_update	(void);
 static void prefs_junk_create		(void);
 #if USE_GPGME
 static void prefs_privacy_create	(void);
+#endif
+#if USE_SSL
+static void prefs_master_password_create (void);
 #endif
 static void prefs_details_create	(void);
 static GtkWidget *prefs_other_create	(void);
@@ -852,6 +866,10 @@ static void prefs_common_create(void)
 #if USE_GPGME
 	prefs_privacy_create();
 	SET_NOTEBOOK_LABEL(dialog.notebook, _("Privacy"),   page++);
+#endif
+#if USE_SSL
+	prefs_master_password_create();
+	SET_NOTEBOOK_LABEL(dialog.notebook, _("Master password"), page++);
 #endif
 	prefs_details_create();
 	SET_NOTEBOOK_LABEL(dialog.notebook, _("Details"), page++);
@@ -2647,6 +2665,35 @@ static void prefs_privacy_create(void)
 	privacy.checkbtn_gpg_warning         = checkbtn_gpg_warning;
 }
 #endif /* USE_GPGME */
+
+#if USE_SSL
+static void prefs_master_password_create(void)
+{
+	GtkWidget *vbox1;
+	GtkWidget *vbox2;
+	GtkWidget *hbox1;
+	GtkWidget *checkbtn_use_master_password;
+
+	vbox1 = gtk_vbox_new (FALSE, VSPACING);
+	gtk_widget_show (vbox1);
+	gtk_container_add (GTK_CONTAINER (dialog.notebook), vbox1);
+	gtk_container_set_border_width (GTK_CONTAINER (vbox1), VBOX_BORDER);
+
+	vbox2 = gtk_vbox_new (FALSE, 0);
+	gtk_widget_show (vbox2);
+	gtk_box_pack_start (GTK_BOX (vbox1), vbox2, FALSE, FALSE, 0);
+
+	PACK_CHECK_BUTTON (vbox2, checkbtn_use_master_password,
+			   _("Use master password"));
+
+	hbox1 = gtk_hbox_new (FALSE, 8);
+	gtk_widget_show (hbox1);
+	gtk_box_pack_start (GTK_BOX (vbox1), hbox1, FALSE, FALSE, 0);
+
+	master_password.checkbtn_use_master_password
+		= checkbtn_use_master_password;
+}
+#endif /* USE_SSL */
 
 static void prefs_details_create(void)
 {
