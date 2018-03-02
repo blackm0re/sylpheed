@@ -36,6 +36,7 @@
 #include "procheader.h"
 #include "utils.h"
 #include "sylmain.h"
+#include "prefs_common.h"
 
 PrefsAccount *cur_account;
 
@@ -53,7 +54,11 @@ void account_read_config_all(void)
 	PrefsAccount *ac_prefs;
 #if USE_SSL
 	gchar *master_password;
-	master_password = input_query_password("Sylpheed", "Master password");
+	if (prefs_common.use_master_password) {
+		master_password = input_query_password("Sylpheed", "Master password");
+	} else {
+		master_password = NULL;
+	}
 #endif
 
 	debug_print(_("Reading all config for each account...\n"));
