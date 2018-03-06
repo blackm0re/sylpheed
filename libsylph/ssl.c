@@ -36,6 +36,8 @@
 #define CIPHER EVP_aes_256_cfb()
 #define KEY_HASH EVP_sha256()
 #define DIGEST_HASH EVP_sha256()
+#define PBKDF2_DIGEST_SIZE 64
+#define PBKDF2_ITERATIONS 100000
 
 static SSL_CTX *ssl_ctx_SSLv23 = NULL;
 static SSL_CTX *ssl_ctx_TLSv1 = NULL;
@@ -775,6 +777,100 @@ cleanup:
     EVP_CIPHER_CTX_free(ctx);
     EVP_MD_CTX_destroy(mdctx);
 
+    return rc;
+
+}
+
+gint generate_password_hash(gchar **password_hash,
+                            const gchar *password,
+                            const guchar *salt) {
+    /*
+     * Hashes 'password' using PKCS5_PBKDF2_HMAC with SHA512 and 'salt',
+     * and assigns a string to 'password_hash' with the following format:
+     * pbkdf2_sha512$iterations$base64(salt)$base64(password_hash)
+     */
+    guchar lsalt[SALT_SIZE];
+    gchar *PBKDF2_digest, *salt_b64, *digest_b64;
+
+    if (salt == NULL) {
+        if (RAND_bytes(lsalt, SALT_SIZE) != 1) {
+            g_fprintf(stderr, "Random problems...\n");
+            return RC_ERROR;
+        }
+    } else {
+        memcpy(lsalt, salt, SALT_SIZE);
+    }
+
+    PBKDF2_digest = OPENSSL_malloc(PBKDF2_DIGEST_SIZE);
+    OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+
+    PKCS5_PBKDF2_HMAC(password,
+                      strlen(password),
+                      lsalt,
+                      SALT_SIZE,
+                      PBKDF2_ITERATIONS,
+                      EVP_sha512(),
+                      PBKDF2_DIGEST_SIZE,
+                      (guchar *) PBKDF2_digest);
+    digest_b64 = g_base64_encode((guchar *) PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+    OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+    OPENSSL_free(PBKDF2_digest);
+
+    salt_b64 = g_base64_encode(lsalt, SALT_SIZE);
+
+    *password_hash = g_strdup_printf("pbkdf2_sha512$%d$%s$%s",
+                                     PBKDF2_ITERATIONS,
+                                     salt_b64,
+                                     digest_b64);
+
+    OPENSSL_cleanse(digest_b64, strlen(digest_b64));
+    OPENSSL_free(digest_b64);
+
+    OPENSSL_cleanse(salt_b64, strlen(salt_b64));
+    OPENSSL_free(salt_b64);
+
+    return RC_OK;
+
+}
+
+gint check_password(const gchar *password, const gchar *password_hash) {
+
+    gint token_counter, rc;
+    guchar *salt;
+    gchar **tokens, *new_hash;
+    gsize salt_length;
+
+    rc = RC_ERROR;
+    tokens = g_strsplit(password_hash,
+                        "$",
+                        -1);
+    token_counter = 0;
+    while (*(tokens + token_counter) != NULL) {
+        ++token_counter;
+    }
+
+    if (token_counter != 4) {
+        g_fprintf(stderr, "Invalid password hash...\n");
+        goto cleanup;
+    }
+
+    salt = g_base64_decode(*(tokens + 2), &salt_length);
+    if (salt_length != SALT_SIZE) {
+        g_fprintf(stderr, "Salt size does not match\n");
+        goto cleanup;
+    }
+
+    if (generate_password_hash(&new_hash, password, salt) != RC_OK) {
+        g_fprintf(stderr, "Password hash generation failed\n");
+        goto cleanup;
+    }
+
+    rc = g_strcmp0(password_hash, new_hash);
+
+cleanup:
+    g_free(salt);
+    g_free(new_hash);
+    g_strfreev(tokens);
     return rc;
 
 }

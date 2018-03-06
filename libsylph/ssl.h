@@ -68,17 +68,23 @@ void ssl_set_verify_func		(SSLVerifyFunc	 func);
 
 /* master password related code */
 gint encrypt_data(gchar **encrypted,
-                  gint *length_encrypted,
-                  const gchar *data,
-                  const gchar *passphrase,
-                  gint length_data,
-                  guint min_data_length,
-                  gboolean rnd_salt);
+				  gint *length_encrypted,
+				  const gchar *data,
+				  const gchar *passphrase,
+				  gint length_data,
+				  guint min_data_length,
+				  gboolean rnd_salt);
 
 gint decrypt_data(gchar **decrypted,
-                  const gchar *data,
-                  const gchar *passphrase,
-                  gint length_data);
+				  const gchar *data,
+				  const gchar *passphrase,
+				  gint length_data);
+
+gint generate_password_hash(gchar **password_hash,
+							const gchar *password,
+							const guchar *salt);
+
+gint check_password(const gchar *password, const gchar *password_hash);
 /* ---------------------------- */
 #endif /* USE_SSL */
 
