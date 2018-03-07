@@ -794,7 +794,7 @@ gint generate_password_hash(gchar **password_hash,
 
     if (salt == NULL) {
         if (RAND_bytes(lsalt, SALT_SIZE) != 1) {
-            g_fprintf(stderr, "Random problems...\n");
+            debug_print("Random problems...\n");
             return RC_ERROR;
         }
     } else {
@@ -850,18 +850,18 @@ gint check_password(const gchar *password, const gchar *password_hash) {
     }
 
     if (token_counter != 4) {
-        g_fprintf(stderr, "Invalid password hash...\n");
+        debug_print("Invalid password hash...\n");
         goto cleanup;
     }
 
     salt = g_base64_decode(*(tokens + 2), &salt_length);
     if (salt_length != SALT_SIZE) {
-        g_fprintf(stderr, "Salt size does not match\n");
+        debug_print("Salt size does not match\n");
         goto cleanup;
     }
 
     if (generate_password_hash(&new_hash, password, salt) != RC_OK) {
-        g_fprintf(stderr, "Password hash generation failed\n");
+        debug_print("Password hash generation failed\n");
         goto cleanup;
     }
 

@@ -421,6 +421,8 @@ static PrefParam param[] = {
 	/* Master password */
 	{"use_master_password", "FALSE", &prefs_common.use_master_password,
 	P_BOOL},
+	{"master_password_hash", NULL, &prefs_common.master_password_hash,
+	 P_STRING},
 
 	/* Interface */
 	{"separate_folder", "FALSE", &prefs_common.sep_folder, P_BOOL},

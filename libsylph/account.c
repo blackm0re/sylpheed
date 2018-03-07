@@ -37,6 +37,8 @@
 #include "utils.h"
 #include "sylmain.h"
 #include "prefs_common.h"
+#include "ssl.h"
+
 
 PrefsAccount *cur_account;
 
@@ -53,9 +55,49 @@ void account_read_config_all(void)
 	gchar buf[PREFSBUFSIZE];
 	PrefsAccount *ac_prefs;
 #if USE_SSL
-	gchar *master_password;
+    guint cnt;
+	gchar *master_password, *master_password_confirm;
 	if (prefs_common.use_master_password) {
-		master_password = input_query_password("Sylpheed", "Master password");
+		if (prefs_common.master_password_hash != NULL) {
+            for (cnt = 0; cnt < 3; ++cnt) {
+                /* allow 3 attempts to enter the master password */
+                master_password = input_query_password(_("Sylpheed"),
+                                                       _("Master password"));
+                if (check_password(
+                        master_password,
+                        prefs_common.master_password_hash) == RC_OK) {
+                    break;
+                }
+                debug_print(_("Wrong master password entered (%d)\n"), cnt);
+                g_free(master_password);
+                master_password = NULL;
+            }
+            /* TODO: Warning if password is NULL */
+		} else {
+			/* No master password set (no master_password_hash) */
+            for (cnt = 0; cnt < 3; ++cnt) {
+                master_password = input_query_password(_("Sylpheed"),
+                                                       _("Master password"));
+                master_password_confirm = input_query_password(
+                    _("Sylpheed"),
+                    _("Master password confirmation"));
+                if (strcmp(master_password, master_password_confirm) == 0) {
+                    /* The passwords match */
+                    g_free(master_password_confirm);
+                    if (generate_password_hash(
+                            &prefs_common.master_password_hash,
+                            master_password,
+                            NULL) != RC_OK) {
+                        debug_print(
+                            _("Could not generate master password hash"));
+                        g_free(master_password);
+                        continue;
+                    }
+                    prefs_common_write_config();
+                    break;
+                }
+            }
+		}
 	} else {
 		master_password = NULL;
 	}
