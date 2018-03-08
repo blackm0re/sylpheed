@@ -265,9 +265,11 @@ int main(int argc, char *argv[])
 	set_ui_update_func(gtkut_events_flush);
 	set_progress_func(main_window_progress_show);
 	set_input_query_password_func(input_dialog_query_password);
+	set_input_set_new_password_func(input_dialog_set_new_password);
 #if USE_SSL
 	ssl_init();
 	ssl_set_verify_func(ssl_manager_verify_cert);
+	set_input_query_master_password_func(input_dialog_query_master_password);
 #endif
 
 	CHDIR_EXIT_IF_FAIL(get_home_dir(), 1);

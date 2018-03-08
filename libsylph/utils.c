@@ -4598,6 +4598,36 @@ gchar *input_query_password(const gchar *server, const gchar *user)
 		return NULL;
 }
 
+static QueryMasterPasswordFunc query_master_password_func = NULL;
+
+void set_input_query_master_password_func(QueryMasterPasswordFunc func)
+{
+	query_master_password_func = func;
+}
+
+gchar *input_query_master_password(void)
+{
+	if (query_master_password_func)
+		return query_master_password_func();
+	else
+		return NULL;
+}
+
+static SetNewPasswordFunc set_new_password_func = NULL;
+
+void set_input_set_new_password_func(SetNewPasswordFunc func)
+{
+	set_new_password_func = func;
+}
+
+gchar *input_set_new_password(guint max_attempts)
+{
+	if (set_new_password_func)
+		return set_new_password_func(max_attempts);
+	else
+		return NULL;
+}
+
 /* logging */
 
 static FILE *log_fp = NULL;

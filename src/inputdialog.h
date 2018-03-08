@@ -36,7 +36,8 @@ gchar *input_dialog_combo		(const gchar	*title,
 					 gboolean	 case_sensitive);
 gchar *input_dialog_query_password	(const gchar	*server,
 					 const gchar	*user);
-
+gchar *input_dialog_query_master_password(void);
+gchar *input_dialog_set_new_password(guint max_attempts);
 gchar *input_dialog_with_filesel	(const gchar	*title,
 					 const gchar	*message,
 					 const gchar	*default_string,

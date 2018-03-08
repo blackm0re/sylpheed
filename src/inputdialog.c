@@ -156,6 +156,44 @@ gchar *input_dialog_query_password(const gchar *server, const gchar *user)
 	return pass;
 }
 
+gchar *input_dialog_query_master_password(void)
+{
+	return input_dialog_with_invisible(_("Input password"),
+									   _("Master password"),
+									   NULL);
+}
+
+gchar *input_dialog_set_new_password(guint max_attempts)
+{
+	guint cnt;
+	gchar *pass1, *pass2;
+
+	if (max_attempts < 1)
+		return NULL;
+
+	for (cnt = 0; cnt < max_attempts; ++cnt) {
+		pass1 = input_dialog_with_invisible(
+			_("Input password"),
+			_("New password"),
+			NULL);
+		pass2 = input_dialog_with_invisible(
+			_("Input password"),
+			_("Confirm new password"),
+			NULL);
+		if (strcmp(pass1, pass2) == 0) {
+            /* TODO: clear before free? */
+			g_free(pass2);
+			break;
+		}
+        /* TODO: clear before free? */
+		g_free(pass2);
+		g_free(pass1);
+		pass1 = NULL;
+	}
+
+	return pass1;
+}
+
 gchar *input_dialog_with_filesel(const gchar *title, const gchar *message,
 				 const gchar *default_string,
 				 GtkFileChooserAction action)

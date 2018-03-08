@@ -19,6 +19,7 @@ libsylph_0_la_SOURCES = \
 	folder.c \
 	html.c \
 	imap.c \
+	masterpassword.c \
 	mbox.c \
 	md5.c \
 	md5_hmac.c \
@@ -62,6 +63,7 @@ libsylph_0include_HEADERS = \
 	folder.h \
 	html.h \
 	imap.h \
+	masterpassword.h \
 	mbox.h \
 	md5.h \
 	md5_hmac.h \

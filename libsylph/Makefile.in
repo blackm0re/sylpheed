@@ -129,8 +129,8 @@ libsylph_0_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libsylph_0_la_OBJECTS = account.lo base64.lo codeconv.lo \
 	customheader.lo displayheader.lo filter.lo folder.lo html.lo \
-	imap.lo mbox.lo md5.lo md5_hmac.lo mh.lo news.lo nntp.lo \
-	pop.lo prefs.lo prefs_account.lo prefs_common.lo procheader.lo \
+	imap.lo masterpassword.lo mbox.lo md5.lo md5_hmac.lo mh.lo news.lo \
+	nntp.lo	pop.lo prefs.lo prefs_account.lo prefs_common.lo procheader.lo \
 	procmime.lo procmsg.lo quoted-printable.lo recv.lo session.lo \
 	smtp.lo socket.lo socks.lo ssl.lo ssl_hostname_validation.lo \
 	stringtable.lo sylmain.lo unmime.lo utils.lo uuencode.lo \
@@ -402,6 +402,7 @@ libsylph_0_la_SOURCES = \
 	folder.c \
 	html.c \
 	imap.c \
+	masterpassword.c \
 	mbox.c \
 	md5.c \
 	md5_hmac.c \
@@ -445,6 +446,7 @@ libsylph_0include_HEADERS = \
 	folder.h \
 	html.h \
 	imap.h \
+	masterpassword.h \
 	mbox.h \
 	md5.h \
 	md5_hmac.h \
@@ -579,6 +581,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/folder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/html.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/imap.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/masterpassword.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mbox.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/md5_hmac.Plo@am__quote@

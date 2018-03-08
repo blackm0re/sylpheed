@@ -202,6 +202,8 @@ typedef void (*ProgressFunc)		(gint		 cur,
 					 gint		 total);
 typedef gchar * (*QueryPasswordFunc)	(const gchar	*server,
 					 const gchar	*user);
+typedef gchar * (*QueryMasterPasswordFunc) (void);
+typedef gchar * (*SetNewPasswordFunc) (guint max_attempts);
 typedef void (*LogFunc)			(const gchar	*str);
 typedef void (*LogFlushFunc)		(void);
 
@@ -560,9 +562,12 @@ void progress_show	(gint		 cur,
 
 /* user input */
 void set_input_query_password_func	(QueryPasswordFunc	func);
-
 gchar *input_query_password	(const gchar	*server,
 				 const gchar	*user);
+void set_input_query_master_password_func(QueryMasterPasswordFunc func);
+gchar *input_query_master_password(void);
+void set_input_set_new_password_func(SetNewPasswordFunc func);
+gchar *input_set_new_password(guint max_attempts);
 
 /* logging */
 void set_log_file	(const gchar	*filename);
