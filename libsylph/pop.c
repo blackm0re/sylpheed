@@ -39,6 +39,7 @@
 #include "prefs_account.h"
 #include "utils.h"
 #include "recv.h"
+#include "masterpassword.h"
 
 gint pop3_greeting_recv		(Pop3Session *session,
 				 const gchar *msg);
@@ -437,8 +438,14 @@ Session *pop3_session_new(PrefsAccount *account)
 	session->error_msg = NULL;
 
 	session->user = g_strdup(account->userid);
-	session->pass = account->passwd ? g_strdup(account->passwd) :
-		account->tmp_pass ? g_strdup(account->tmp_pass) : NULL;
+	if (master_password_active()) {
+		session->pass = account->passwd ? decrypt_with_master_password(
+			account->passwd) : account->tmp_pass ? g_strdup(
+				account->tmp_pass) : NULL;
+	} else {
+		session->pass = account->passwd ? g_strdup(account->passwd) :
+			account->tmp_pass ? g_strdup(account->tmp_pass) : NULL;
+	}
 
 	SESSION(session)->server = g_strdup(account->recv_server);
 

@@ -27,12 +27,14 @@
 extern gchar *master_password;
 void set_master_password(const char *password);
 gchar *get_master_password(void);
+void unload_master_password(void);
+gboolean master_password_active(void);
+gchar *decrypt_with_master_password(gchar *str);
+gchar *encrypt_with_master_password(gchar *str);
 
 #if USE_SSL
-
 gint set_master_password_interactively(guint max_attempts);
 gint check_master_password_interactively(guint max_attempts);
-
 #endif /* USE_SSL */
 
 #endif /* __MASTERPASSWORD_H__ */

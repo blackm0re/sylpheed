@@ -36,9 +36,6 @@
 #include "procheader.h"
 #include "utils.h"
 #include "sylmain.h"
-#include "prefs_common.h"
-#include "masterpassword.h"
-
 
 PrefsAccount *cur_account;
 
@@ -54,24 +51,6 @@ void account_read_config_all(void)
 	FILE *fp;
 	gchar buf[PREFSBUFSIZE];
 	PrefsAccount *ac_prefs;
-#if USE_SSL
-	if (prefs_common.use_master_password) {
-		if (prefs_common.master_password_hash != NULL) {
-            /* allow 3 attempts to enter the master password */
-            if (check_master_password_interactively(3) != 0) {
-                /* master password does not match the hash */
-                g_free(master_password);
-                master_password = NULL;
-            }
-		} else {
-			/* No master password set (no master_password_hash) */
-            set_master_password_interactively(3);
-		}
-		/* TODO: Warning if password is NULL */
-	} else {
-		master_password = NULL;
-	}
-#endif
 
 	debug_print(_("Reading all config for each account...\n"));
 
@@ -100,9 +79,6 @@ void account_read_config_all(void)
 	for (cur = ac_label_list; cur != NULL; cur = cur->next) {
 		ac_prefs = prefs_account_new();
 		prefs_account_read_config(ac_prefs, (gchar *)cur->data);
-#if USE_SSL
-		ac_prefs->master_password = master_password;
-#endif
 		account_list = g_list_append(account_list, ac_prefs);
 		if (ac_prefs->is_default)
 			cur_account = ac_prefs;

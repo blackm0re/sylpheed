@@ -44,6 +44,7 @@
 #include "utils.h"
 #include "prefs_common.h"
 #include "prefs_account.h"
+#include "masterpassword.h"
 #if USE_SSL
 #  include "ssl.h"
 #endif
@@ -250,7 +251,11 @@ static Session *news_session_new_for_folder(Folder *folder)
 	if (ac->use_nntp_auth && ac->userid && ac->userid[0]) {
 		userid = ac->userid;
 		if (ac->passwd && ac->passwd[0])
-			passwd = g_strdup(ac->passwd);
+			if (master_password_active()) {
+				passwd = decrypt_with_master_password(ac->passwd);
+			} else {
+				passwd = g_strdup(ac->passwd);
+			}
 		else
 			passwd = input_query_password(ac->nntp_server, userid);
 	}

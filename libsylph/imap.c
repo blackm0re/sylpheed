@@ -52,6 +52,7 @@
 #include "utils.h"
 #include "prefs_common.h"
 #include "virtual.h"
+#include "masterpassword.h"
 
 #define IMAP4_PORT	143
 #if USE_SSL
@@ -705,19 +706,9 @@ static gint imap_session_connect(IMAPSession *session)
 	account = (PrefsAccount *)(SESSION(session)->data);
 
 	log_message(_("creating IMAP4 connection to %s:%d ...\n"),
-		    SESSION(session)->server, SESSION(session)->port);
+				SESSION(session)->server, SESSION(session)->port);
 
-	if (prefs_common.use_master_password && account->master_password != NULL) {
-		if (decrypt_data(&pass,
-						 account->passwd,
-						 account->master_password,
-						 strlen(account->passwd) + 1) != RC_OK) {
-			session_destroy(session);
-			return -1;
-		}
-	} else {
-		pass = account->passwd;
-	}
+	pass = decrypt_with_master_password(account->passwd);
 	if (!pass)
 		pass = account->tmp_pass;
 	if (!pass) {
@@ -731,6 +722,7 @@ static gint imap_session_connect(IMAPSession *session)
 		account->tmp_pass = tmp_pass;
 		pass = account->tmp_pass;
 	}
+
 	if (account->use_socks && account->use_socks_for_recv &&
 	    account->proxy_host) {
 		socks_info = socks_info_new(account->socks_type, account->proxy_host, account->proxy_port, account->use_proxy_auth ? account->proxy_name : NULL, account->use_proxy_auth ? account->proxy_pass : NULL);

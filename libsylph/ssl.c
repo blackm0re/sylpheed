@@ -411,467 +411,465 @@ void ssl_set_verify_func(SSLVerifyFunc func)
 
 /* master password related functions */
 static gint secure_derive_key(guchar *key,
-                              gint length_key,
-                              const gchar *passphrase,
-                              const guchar *salt) {
+							  gint length_key,
+							  const gchar *passphrase,
+							  const guchar *salt) {
 
-    guint length_buffer, length_hash;
-    guchar *buffer, *ptr_hash;
+	guint length_buffer, length_hash;
+	guchar *buffer, *ptr_hash;
 
-    EVP_MD_CTX *mdctx;
+	EVP_MD_CTX *mdctx;
 
-    OPENSSL_cleanse(key, length_key);
+	OPENSSL_cleanse(key, length_key);
 
-    length_buffer = SALT_SIZE + strlen(passphrase);
-    buffer = OPENSSL_malloc(length_buffer);
-    OPENSSL_cleanse(buffer, length_buffer);
+	length_buffer = SALT_SIZE + strlen(passphrase);
+	buffer = OPENSSL_malloc(length_buffer);
+	OPENSSL_cleanse(buffer, length_buffer);
 
 	memcpy(buffer, salt, SALT_SIZE);
 	memcpy(buffer + SALT_SIZE, passphrase, strlen(passphrase));
 
-    mdctx = EVP_MD_CTX_create();
-    EVP_DigestInit_ex(mdctx, KEY_HASH, NULL);
-    EVP_DigestUpdate(mdctx, buffer, length_buffer);
-    OPENSSL_cleanse(buffer, length_buffer);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, KEY_HASH, NULL);
+	EVP_DigestUpdate(mdctx, buffer, length_buffer);
+	OPENSSL_cleanse(buffer, length_buffer);
 
-    ptr_hash = OPENSSL_malloc(EVP_MD_size(KEY_HASH));
-    EVP_DigestFinal_ex(mdctx, ptr_hash, &length_hash);
+	ptr_hash = OPENSSL_malloc(EVP_MD_size(KEY_HASH));
+	EVP_DigestFinal_ex(mdctx, ptr_hash, &length_hash);
 
-    memcpy(key,
-           ptr_hash,
-           (length_hash > length_key) ? length_key : length_hash);
+	memcpy(key,
+		   ptr_hash,
+		   (length_hash > length_key) ? length_key : length_hash);
 
-    OPENSSL_cleanse(ptr_hash, length_hash);
-    OPENSSL_free(ptr_hash);
-    OPENSSL_free(buffer);
-    EVP_MD_CTX_destroy(mdctx);
+	OPENSSL_cleanse(ptr_hash, length_hash);
+	OPENSSL_free(ptr_hash);
+	OPENSSL_free(buffer);
+	EVP_MD_CTX_destroy(mdctx);
 
-    return RC_OK;
+	return RC_OK;
 
 }
-
 
 gint encrypt_data(gchar **encrypted,
-                  gint *length_encrypted,
-                  const gchar *data,
-                  const gchar *passphrase,
-                  gint length_data,
-                  guint min_data_length,
-                  gboolean rnd_salt) {
+				  gint *length_encrypted,
+				  const gchar *data,
+				  const gchar *passphrase,
+				  gint length_data,
+				  guint min_data_length,
+				  gboolean rnd_salt) {
 
-    gint crypt_buffer_cnt, rc;
-    guint key_size, length_hash;
-    guint length_cleartext, length_ciphertext, length_total;
-    guchar salt[SALT_SIZE];
-    guchar *ciphertext_buffer, *total_buffer;
-    /* sensitive buffers and counters */
-    guint length_data_payload, length_padding;
-    gchar str_data_size[3];
-    guchar *data_payload_buffer, *hash_buffer, *padding_buffer, *key;
-    guchar *cleartext_buffer;
+	gint crypt_buffer_cnt, rc;
+	guint key_size, length_hash;
+	guint length_cleartext, length_ciphertext, length_total;
+	guchar salt[SALT_SIZE];
+	guchar *ciphertext_buffer, *total_buffer;
+	/* sensitive buffers and counters */
+	guint length_data_payload, length_padding;
+	gchar str_data_size[3];
+	guchar *data_payload_buffer, *hash_buffer, *padding_buffer, *key;
+	guchar *cleartext_buffer;
 
-    EVP_CIPHER_CTX *ctx;
-    EVP_MD_CTX *mdctx;
+	EVP_CIPHER_CTX *ctx;
+	EVP_MD_CTX *mdctx;
 
-    rc = RC_ERROR;
+	rc = RC_ERROR;
 
-    if (length_data < 1) {
-        return -1;
-    }
-    if (rnd_salt) {
-        if (RAND_bytes(salt, SALT_SIZE) != 1) {
-            debug_print("Random problems...\n");
-            goto cleanup;
-        }
-    } else {
-        strncpy((gchar *)salt, "FOR TESTING ONLY", SALT_SIZE);
-    }
+	if (length_data < 1) {
+		return -1;
+	}
+	if (rnd_salt) {
+		if (RAND_bytes(salt, SALT_SIZE) != 1) {
+			debug_print("Random problems...\n");
+			goto cleanup;
+		}
+	} else {
+		strncpy((gchar *)salt, "FOR TESTING ONLY", SALT_SIZE);
+	}
 
-    key_size = EVP_CIPHER_key_length(CIPHER);
-    key = OPENSSL_malloc(key_size);
-    OPENSSL_cleanse(key, key_size);
-    if (secure_derive_key(key,
-                      key_size,
-                      passphrase,
-                          salt) != RC_OK) {
-        OPENSSL_cleanse(key, key_size);
-        debug_print("Could not generate secure key\n");
-        goto cleanup;
-    }
+	key_size = EVP_CIPHER_key_length(CIPHER);
+	key = OPENSSL_malloc(key_size);
+	OPENSSL_cleanse(key, key_size);
+	if (secure_derive_key(key,
+					  key_size,
+					  passphrase,
+						  salt) != RC_OK) {
+		OPENSSL_cleanse(key, key_size);
+		debug_print("Could not generate secure key\n");
+		goto cleanup;
+	}
 
-    /* prepare the data-buffer */
-    length_padding = 0;
-    if (length_data < min_data_length) {
-        g_snprintf(str_data_size, 3, "%02d", length_data);
-        length_padding = min_data_length - length_data;
-        padding_buffer = OPENSSL_malloc(length_padding);
-        OPENSSL_cleanse(padding_buffer, length_padding);
-        if (RAND_bytes(padding_buffer, length_padding) != 1) {
-            debug_print("Random problems...\n");
-            goto cleanup;
-        }
-    } else {
-        g_snprintf(str_data_size, 3, "-1");
-    }
+	/* prepare the data-buffer */
+	length_padding = 0;
+	if (length_data < min_data_length) {
+		g_snprintf(str_data_size, 3, "%02d", length_data);
+		length_padding = min_data_length - length_data;
+		padding_buffer = OPENSSL_malloc(length_padding);
+		OPENSSL_cleanse(padding_buffer, length_padding);
+		if (RAND_bytes(padding_buffer, length_padding) != 1) {
+			debug_print("Random problems...\n");
+			goto cleanup;
+		}
+	} else {
+		g_snprintf(str_data_size, 3, "-1");
+	}
 
-    length_data_payload = 2 + length_data + length_padding;
-    data_payload_buffer = OPENSSL_malloc(length_data_payload);
-    OPENSSL_cleanse(data_payload_buffer, length_data_payload);
+	length_data_payload = 2 + length_data + length_padding;
+	data_payload_buffer = OPENSSL_malloc(length_data_payload);
+	OPENSSL_cleanse(data_payload_buffer, length_data_payload);
 
-    memcpy(data_payload_buffer, str_data_size, 2);
-    memcpy(data_payload_buffer + 2, data, length_data);
-    if (length_padding > 0) {
-        memcpy(data_payload_buffer + (2 + length_data),
-               padding_buffer,
-               length_padding);
-    }
+	memcpy(data_payload_buffer, str_data_size, 2);
+	memcpy(data_payload_buffer + 2, data, length_data);
+	if (length_padding > 0) {
+		memcpy(data_payload_buffer + (2 + length_data),
+			   padding_buffer,
+			   length_padding);
+	}
 
-    mdctx = EVP_MD_CTX_create();
-    EVP_DigestInit_ex(mdctx, DIGEST_HASH, NULL);
-    EVP_DigestUpdate(mdctx, data_payload_buffer, length_data_payload);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, DIGEST_HASH, NULL);
+	EVP_DigestUpdate(mdctx, data_payload_buffer, length_data_payload);
 
-    length_hash = EVP_MD_size(DIGEST_HASH);
-    hash_buffer = OPENSSL_malloc(length_hash);
-    OPENSSL_cleanse(hash_buffer, length_hash);
-    EVP_DigestFinal_ex(mdctx, hash_buffer, NULL);
+	length_hash = EVP_MD_size(DIGEST_HASH);
+	hash_buffer = OPENSSL_malloc(length_hash);
+	OPENSSL_cleanse(hash_buffer, length_hash);
+	EVP_DigestFinal_ex(mdctx, hash_buffer, NULL);
 
-    length_cleartext = length_hash + length_data_payload;
+	length_cleartext = length_hash + length_data_payload;
 
-    cleartext_buffer = OPENSSL_malloc(length_cleartext);
-    OPENSSL_cleanse(cleartext_buffer, length_cleartext);
+	cleartext_buffer = OPENSSL_malloc(length_cleartext);
+	OPENSSL_cleanse(cleartext_buffer, length_cleartext);
 
-    /* assemble cleartext-buffer */
-    memcpy(cleartext_buffer, hash_buffer, length_hash);
-    memcpy(cleartext_buffer + length_hash,
-           data_payload_buffer,
-           length_data_payload);
-    OPENSSL_cleanse(data_payload_buffer, length_data_payload); /* sensitive */
+	/* assemble cleartext-buffer */
+	memcpy(cleartext_buffer, hash_buffer, length_hash);
+	memcpy(cleartext_buffer + length_hash,
+		   data_payload_buffer,
+		   length_data_payload);
+	OPENSSL_cleanse(data_payload_buffer, length_data_payload); /* sensitive */
 
-    /* encryption */
-    if (!(ctx = EVP_CIPHER_CTX_new())) {
-        debug_print("New ctx failed\n");
-        goto cleanup;
-    }
+	/* encryption */
+	if (!(ctx = EVP_CIPHER_CTX_new())) {
+		debug_print("New ctx failed\n");
+		goto cleanup;
+	}
 
-    length_ciphertext = 0;
-    if (EVP_EncryptInit_ex(ctx, CIPHER, NULL, key, salt) != 1) {
-        debug_print("EVP_EncryptInit_ex failed\n");
-        goto cleanup;
-    }
+	length_ciphertext = 0;
+	if (EVP_EncryptInit_ex(ctx, CIPHER, NULL, key, salt) != 1) {
+		debug_print("EVP_EncryptInit_ex failed\n");
+		goto cleanup;
+	}
 
-    ciphertext_buffer = OPENSSL_malloc(length_cleartext);
+	ciphertext_buffer = OPENSSL_malloc(length_cleartext);
 
-    crypt_buffer_cnt = 0;
-    while(1) {
-        if (EVP_EncryptUpdate(ctx,
-                              ciphertext_buffer + length_ciphertext,
-                              &crypt_buffer_cnt,
-                              cleartext_buffer + length_ciphertext,
-                              1) != 1) { /* one byte at a time */
-            debug_print("EVP_EncryptUpdate failed\n");
-            goto cleanup;
-        }
+	crypt_buffer_cnt = 0;
+	while(1) {
+		if (EVP_EncryptUpdate(ctx,
+							  ciphertext_buffer + length_ciphertext,
+							  &crypt_buffer_cnt,
+							  cleartext_buffer + length_ciphertext,
+							  1) != 1) { /* one byte at a time */
+			debug_print("EVP_EncryptUpdate failed\n");
+			goto cleanup;
+		}
 
-        if (crypt_buffer_cnt != 1) { /* paranoia */
-            debug_print("The sizes of enc and dec text do not correspond\n");
-            goto cleanup;
-        }
+		if (crypt_buffer_cnt != 1) { /* paranoia */
+			debug_print("The sizes of enc and dec text do not correspond\n");
+			goto cleanup;
+		}
 
-        ++length_ciphertext;
+		++length_ciphertext;
 
-        if (length_ciphertext >= length_cleartext) {
-            break;
-        }
-    }
-    /* No padding required for the CFB mode */
+		if (length_ciphertext >= length_cleartext) {
+			break;
+		}
+	}
+	/* No padding required for the CFB mode */
 
-    OPENSSL_cleanse(cleartext_buffer, length_cleartext); /* sensitive */
-    length_total = SALT_SIZE + length_ciphertext;
-    total_buffer = OPENSSL_malloc(length_total);
+	OPENSSL_cleanse(cleartext_buffer, length_cleartext); /* sensitive */
+	length_total = SALT_SIZE + length_ciphertext;
+	total_buffer = OPENSSL_malloc(length_total);
 
-    memcpy(total_buffer, salt, SALT_SIZE);
-    memcpy(total_buffer + SALT_SIZE, ciphertext_buffer, length_ciphertext);
+	memcpy(total_buffer, salt, SALT_SIZE);
+	memcpy(total_buffer + SALT_SIZE, ciphertext_buffer, length_ciphertext);
 
-    *encrypted = g_base64_encode(total_buffer, length_total);
-    *length_encrypted = strlen(*encrypted);
+	*encrypted = g_base64_encode(total_buffer, length_total);
+	*length_encrypted = strlen(*encrypted);
 
-    rc = RC_OK;
+	rc = RC_OK;
 
 cleanup:
-    /* key */
-    OPENSSL_cleanse(key, key_size);
-    OPENSSL_free(key);
-    /* cleartext buffer */
-    OPENSSL_cleanse(cleartext_buffer, length_cleartext);
-    OPENSSL_free(cleartext_buffer);
-    /* payload buffer */
-    OPENSSL_cleanse(data_payload_buffer, length_data_payload);
-    OPENSSL_free(data_payload_buffer);
-    /* hash */
-    OPENSSL_cleanse(hash_buffer, length_hash);
-    OPENSSL_free(hash_buffer);
-    /* padding */
-    if (length_padding > 0) {
-        OPENSSL_cleanse(padding_buffer, length_padding);
-        OPENSSL_free(padding_buffer);
-    }
+	/* key */
+	OPENSSL_cleanse(key, key_size);
+	OPENSSL_free(key);
+	/* cleartext buffer */
+	OPENSSL_cleanse(cleartext_buffer, length_cleartext);
+	OPENSSL_free(cleartext_buffer);
+	/* payload buffer */
+	OPENSSL_cleanse(data_payload_buffer, length_data_payload);
+	OPENSSL_free(data_payload_buffer);
+	/* hash */
+	OPENSSL_cleanse(hash_buffer, length_hash);
+	OPENSSL_free(hash_buffer);
+	/* padding */
+	if (length_padding > 0) {
+		OPENSSL_cleanse(padding_buffer, length_padding);
+		OPENSSL_free(padding_buffer);
+	}
 
-    OPENSSL_cleanse(str_data_size, 3); /* paranoia */
+	OPENSSL_cleanse(str_data_size, 3); /* paranoia */
 
-    /* ciphertext buffer */
-    OPENSSL_free(ciphertext_buffer);
+	/* ciphertext buffer */
+	OPENSSL_free(ciphertext_buffer);
 
-    /* total buffer */
-    OPENSSL_free(total_buffer);
+	/* total buffer */
+	OPENSSL_free(total_buffer);
 
-    length_data_payload = 0;
-    length_padding = 0;
+	length_data_payload = 0;
+	length_padding = 0;
 
-    EVP_CIPHER_CTX_free(ctx);
-    EVP_MD_CTX_destroy(mdctx);
+	EVP_CIPHER_CTX_free(ctx);
+	EVP_MD_CTX_destroy(mdctx);
 
-    return rc;
+	return rc;
 
 }
 
-
 gint decrypt_data(gchar **decrypted,
-                  const gchar *data,
-                  const gchar *passphrase,
-                  gint length_data) {
+				  const gchar *data,
+				  const gchar *passphrase,
+				  gint length_data) {
 
-    gint rc; /* return code */
-    gint decrypt_buffer_cnt, length_ciphertext, length_decrypted;
-    guint key_size, length_hash, length_cleartext;
-    gsize length_total;
-    guchar salt[SALT_SIZE];
-    guchar *ciphertext_buffer, *total_buffer;
-    /* sensitive buffers and counters */
-    gint data_size;
-    guint length_data_payload;
-    gchar str_data_size[3];
-    guchar *data_payload_buffer, *hash_buffer, *key;
-    guchar *cleartext_buffer;
+	gint rc; /* return code */
+	gint decrypt_buffer_cnt, length_ciphertext, length_decrypted;
+	guint key_size, length_hash, length_cleartext;
+	gsize length_total;
+	guchar salt[SALT_SIZE];
+	guchar *ciphertext_buffer, *total_buffer;
+	/* sensitive buffers and counters */
+	gint data_size;
+	guint length_data_payload;
+	gchar str_data_size[3];
+	guchar *data_payload_buffer, *hash_buffer, *key;
+	guchar *cleartext_buffer;
 
-    EVP_CIPHER_CTX *ctx;
-    EVP_MD_CTX *mdctx;
+	EVP_CIPHER_CTX *ctx;
+	EVP_MD_CTX *mdctx;
 
-    rc = -1;
+	rc = -1;
 
-    if (length_data < 1) {
-        return -1;
-    }
+	if (length_data < 1) {
+		return -1;
+	}
 
-    total_buffer = g_base64_decode(data, &length_total);
-    length_ciphertext = length_total - SALT_SIZE;
-    ciphertext_buffer = OPENSSL_malloc(length_ciphertext);
-    OPENSSL_cleanse(ciphertext_buffer, length_ciphertext);
+	total_buffer = g_base64_decode(data, &length_total);
+	length_ciphertext = length_total - SALT_SIZE;
+	ciphertext_buffer = OPENSSL_malloc(length_ciphertext);
+	OPENSSL_cleanse(ciphertext_buffer, length_ciphertext);
 
-    memcpy(salt, total_buffer, SALT_SIZE);
-    memcpy(ciphertext_buffer, total_buffer + SALT_SIZE, length_ciphertext);
+	memcpy(salt, total_buffer, SALT_SIZE);
+	memcpy(ciphertext_buffer, total_buffer + SALT_SIZE, length_ciphertext);
 
-    key_size = EVP_CIPHER_key_length(CIPHER);
+	key_size = EVP_CIPHER_key_length(CIPHER);
 
-    /* decryption */
-    if(!(ctx = EVP_CIPHER_CTX_new())) {
-        debug_print("New ctx failed\n");
-        goto cleanup;
-    }
+	/* decryption */
+	if(!(ctx = EVP_CIPHER_CTX_new())) {
+		debug_print("New ctx failed\n");
+		goto cleanup;
+	}
 
-    key = OPENSSL_malloc(key_size);
-    OPENSSL_cleanse(key, key_size);
-    if (secure_derive_key(key,
-                          key_size,
-                          passphrase,
-                          salt) != 0) {
-        OPENSSL_cleanse(key, key_size);
-        debug_print("Could not generate secure key\n");
-        goto cleanup;
-    }
+	key = OPENSSL_malloc(key_size);
+	OPENSSL_cleanse(key, key_size);
+	if (secure_derive_key(key,
+						  key_size,
+						  passphrase,
+						  salt) != 0) {
+		OPENSSL_cleanse(key, key_size);
+		debug_print("Could not generate secure key\n");
+		goto cleanup;
+	}
 
-    if (EVP_DecryptInit_ex(ctx, CIPHER, NULL, key, salt) != 1) {
-        debug_print("EVP_DecryptInit_ex failed\n");
-        goto cleanup;
-    }
-    OPENSSL_cleanse(key, key_size); /* highly sensitive */
-    cleartext_buffer = OPENSSL_malloc(length_ciphertext);
-    OPENSSL_cleanse(cleartext_buffer, length_ciphertext);
+	if (EVP_DecryptInit_ex(ctx, CIPHER, NULL, key, salt) != 1) {
+		debug_print("EVP_DecryptInit_ex failed\n");
+		goto cleanup;
+	}
+	OPENSSL_cleanse(key, key_size); /* highly sensitive */
+	cleartext_buffer = OPENSSL_malloc(length_ciphertext);
+	OPENSSL_cleanse(cleartext_buffer, length_ciphertext);
 
-    length_cleartext = 0;
-    decrypt_buffer_cnt = 0;
+	length_cleartext = 0;
+	decrypt_buffer_cnt = 0;
 
-    while(1) {
-        if (EVP_DecryptUpdate(ctx,
-                              cleartext_buffer + length_cleartext,
-                              &decrypt_buffer_cnt,
-                              ciphertext_buffer + length_cleartext,
-                              1) != 1) { /* one byte at a time */
-            debug_print("EVP_EncryptUpdate failed\n");
-            goto cleanup;
-        }
+	while(1) {
+		if (EVP_DecryptUpdate(ctx,
+							  cleartext_buffer + length_cleartext,
+							  &decrypt_buffer_cnt,
+							  ciphertext_buffer + length_cleartext,
+							  1) != 1) { /* one byte at a time */
+			debug_print("EVP_EncryptUpdate failed\n");
+			goto cleanup;
+		}
 
-        if (decrypt_buffer_cnt != 1) { /* paranoia */
-            debug_print("The sizes of enc and dec text do not correspond");
-            goto cleanup;
-        }
+		if (decrypt_buffer_cnt != 1) { /* paranoia */
+			debug_print("The sizes of enc and dec text do not correspond");
+			goto cleanup;
+		}
 
-        ++length_cleartext;
+		++length_cleartext;
 
-        if (length_cleartext >= length_ciphertext) {
-            break;
-        }
-    }
+		if (length_cleartext >= length_ciphertext) {
+			break;
+		}
+	}
 
 
-    length_hash = EVP_MD_size(DIGEST_HASH);
-    hash_buffer = OPENSSL_malloc(length_hash);
-    length_data_payload = length_cleartext - length_hash;
-    data_payload_buffer = OPENSSL_malloc(length_data_payload);
-    OPENSSL_cleanse(data_payload_buffer, length_data_payload);
+	length_hash = EVP_MD_size(DIGEST_HASH);
+	hash_buffer = OPENSSL_malloc(length_hash);
+	length_data_payload = length_cleartext - length_hash;
+	data_payload_buffer = OPENSSL_malloc(length_data_payload);
+	OPENSSL_cleanse(data_payload_buffer, length_data_payload);
 
-    memcpy(data_payload_buffer,
-           cleartext_buffer + length_hash,
-           length_data_payload);
+	memcpy(data_payload_buffer,
+		   cleartext_buffer + length_hash,
+		   length_data_payload);
 
-    mdctx = EVP_MD_CTX_create();
-    EVP_DigestInit_ex(mdctx, DIGEST_HASH, NULL);
-    EVP_DigestUpdate(mdctx, data_payload_buffer, length_data_payload);
-    EVP_DigestFinal_ex(mdctx, hash_buffer, &length_hash);
+	mdctx = EVP_MD_CTX_create();
+	EVP_DigestInit_ex(mdctx, DIGEST_HASH, NULL);
+	EVP_DigestUpdate(mdctx, data_payload_buffer, length_data_payload);
+	EVP_DigestFinal_ex(mdctx, hash_buffer, &length_hash);
 
-    if (strncmp((const gchar*) hash_buffer,
-                (const gchar*) cleartext_buffer,
-                length_hash) != 0) {
-        debug_print("Invalid hash\n");
-        rc = RC_WRONG_HASH_OR_KEY;
-        goto cleanup;
-    }
+	if (strncmp((const gchar*) hash_buffer,
+				(const gchar*) cleartext_buffer,
+				length_hash) != 0) {
+		debug_print("Invalid hash\n");
+		rc = RC_WRONG_HASH_OR_KEY;
+		goto cleanup;
+	}
 
-    memcpy(str_data_size, cleartext_buffer + length_hash, 2);
-    data_size = atoi(str_data_size);
+	memcpy(str_data_size, cleartext_buffer + length_hash, 2);
+	data_size = atoi(str_data_size);
 
-    if (data_size < 0) {
-        length_decrypted = length_data_payload - 2;
-    } else {
-        length_decrypted = data_size;
-    }
-    *decrypted = OPENSSL_malloc(length_decrypted);
-    memcpy(*decrypted, data_payload_buffer + 2, length_decrypted);
+	if (data_size < 0) {
+		length_decrypted = length_data_payload - 2;
+	} else {
+		length_decrypted = data_size;
+	}
+	*decrypted = OPENSSL_malloc(length_decrypted);
+	memcpy(*decrypted, data_payload_buffer + 2, length_decrypted);
 
-    rc = RC_OK;
+	rc = RC_OK;
 
 cleanup:
 
-    /* key */
-    OPENSSL_cleanse(key, key_size);
-    OPENSSL_free(key);
-    /* payload buffer */
-    OPENSSL_cleanse(data_payload_buffer, length_data_payload);
-    OPENSSL_free(data_payload_buffer);
-    /* hash */
-    OPENSSL_cleanse(hash_buffer, length_hash);
-    OPENSSL_free(hash_buffer);
-    /* ciphertext */
-    OPENSSL_free(ciphertext_buffer);
-    OPENSSL_free(total_buffer);
+	/* key */
+	OPENSSL_cleanse(key, key_size);
+	OPENSSL_free(key);
+	/* payload buffer */
+	OPENSSL_cleanse(data_payload_buffer, length_data_payload);
+	OPENSSL_free(data_payload_buffer);
+	/* hash */
+	OPENSSL_cleanse(hash_buffer, length_hash);
+	OPENSSL_free(hash_buffer);
+	/* ciphertext */
+	OPENSSL_free(ciphertext_buffer);
+	OPENSSL_free(total_buffer);
 
-    EVP_CIPHER_CTX_free(ctx);
-    EVP_MD_CTX_destroy(mdctx);
+	EVP_CIPHER_CTX_free(ctx);
+	EVP_MD_CTX_destroy(mdctx);
 
-    return rc;
+	return rc;
 
 }
 
 gint generate_password_hash(gchar **password_hash,
-                            const gchar *password,
-                            const guchar *salt) {
-    /*
-     * Hashes 'password' using PKCS5_PBKDF2_HMAC with SHA512 and 'salt',
-     * and assigns a string to 'password_hash' with the following format:
-     * pbkdf2_sha512$iterations$base64(salt)$base64(password_hash)
-     */
-    guchar lsalt[SALT_SIZE];
-    gchar *PBKDF2_digest, *salt_b64, *digest_b64;
+							const gchar *password,
+							const guchar *salt) {
+	/*
+	 * Hashes 'password' using PKCS5_PBKDF2_HMAC with SHA512 and 'salt',
+	 * and assigns a string to 'password_hash' with the following format:
+	 * pbkdf2_sha512$iterations$base64(salt)$base64(password_hash)
+	 */
+	guchar lsalt[SALT_SIZE];
+	gchar *PBKDF2_digest, *salt_b64, *digest_b64;
 
-    if (salt == NULL) {
-        if (RAND_bytes(lsalt, SALT_SIZE) != 1) {
-            debug_print("Random problems...\n");
-            return RC_ERROR;
-        }
-    } else {
-        memcpy(lsalt, salt, SALT_SIZE);
-    }
+	if (salt == NULL) {
+		if (RAND_bytes(lsalt, SALT_SIZE) != 1) {
+			debug_print("Random problems...\n");
+			return RC_ERROR;
+		}
+	} else {
+		memcpy(lsalt, salt, SALT_SIZE);
+	}
 
-    PBKDF2_digest = OPENSSL_malloc(PBKDF2_DIGEST_SIZE);
-    OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+	PBKDF2_digest = OPENSSL_malloc(PBKDF2_DIGEST_SIZE);
+	OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
 
-    PKCS5_PBKDF2_HMAC(password,
-                      strlen(password),
-                      lsalt,
-                      SALT_SIZE,
-                      PBKDF2_ITERATIONS,
-                      EVP_sha512(),
-                      PBKDF2_DIGEST_SIZE,
-                      (guchar *) PBKDF2_digest);
-    digest_b64 = g_base64_encode((guchar *) PBKDF2_digest, PBKDF2_DIGEST_SIZE);
-    OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
-    OPENSSL_free(PBKDF2_digest);
+	PKCS5_PBKDF2_HMAC(password,
+					  strlen(password),
+					  lsalt,
+					  SALT_SIZE,
+					  PBKDF2_ITERATIONS,
+					  EVP_sha512(),
+					  PBKDF2_DIGEST_SIZE,
+					  (guchar *) PBKDF2_digest);
+	digest_b64 = g_base64_encode((guchar *) PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+	OPENSSL_cleanse(PBKDF2_digest, PBKDF2_DIGEST_SIZE);
+	OPENSSL_free(PBKDF2_digest);
 
-    salt_b64 = g_base64_encode(lsalt, SALT_SIZE);
+	salt_b64 = g_base64_encode(lsalt, SALT_SIZE);
 
-    *password_hash = g_strdup_printf("pbkdf2_sha512$%d$%s$%s",
-                                     PBKDF2_ITERATIONS,
-                                     salt_b64,
-                                     digest_b64);
+	*password_hash = g_strdup_printf("pbkdf2_sha512$%d$%s$%s",
+									 PBKDF2_ITERATIONS,
+									 salt_b64,
+									 digest_b64);
 
-    OPENSSL_cleanse(digest_b64, strlen(digest_b64));
-    OPENSSL_free(digest_b64);
+	OPENSSL_cleanse(digest_b64, strlen(digest_b64));
+	OPENSSL_free(digest_b64);
 
-    OPENSSL_cleanse(salt_b64, strlen(salt_b64));
-    OPENSSL_free(salt_b64);
+	OPENSSL_cleanse(salt_b64, strlen(salt_b64));
+	OPENSSL_free(salt_b64);
 
-    return RC_OK;
+	return RC_OK;
 
 }
 
 gint check_password(const gchar *password, const gchar *password_hash) {
 
-    gint token_counter, rc;
-    guchar *salt;
-    gchar **tokens, *new_hash;
-    gsize salt_length;
+	gint token_counter, rc;
+	guchar *salt;
+	gchar **tokens, *new_hash;
+	gsize salt_length;
 
-    rc = RC_ERROR;
-    tokens = g_strsplit(password_hash,
-                        "$",
-                        -1);
-    token_counter = 0;
-    while (*(tokens + token_counter) != NULL) {
-        ++token_counter;
-    }
+	rc = RC_ERROR;
+	tokens = g_strsplit(password_hash,
+						"$",
+						-1);
+	token_counter = 0;
+	while (*(tokens + token_counter) != NULL) {
+		++token_counter;
+	}
 
-    if (token_counter != 4) {
-        debug_print("Invalid password hash...\n");
-        goto cleanup;
-    }
+	if (token_counter != 4) {
+		debug_print("Invalid password hash...\n");
+		goto cleanup;
+	}
 
-    salt = g_base64_decode(*(tokens + 2), &salt_length);
-    if (salt_length != SALT_SIZE) {
-        debug_print("Salt size does not match\n");
-        goto cleanup;
-    }
+	salt = g_base64_decode(*(tokens + 2), &salt_length);
+	if (salt_length != SALT_SIZE) {
+		debug_print("Salt size does not match\n");
+		goto cleanup;
+	}
 
-    if (generate_password_hash(&new_hash, password, salt) != RC_OK) {
-        debug_print("Password hash generation failed\n");
-        goto cleanup;
-    }
+	if (generate_password_hash(&new_hash, password, salt) != RC_OK) {
+		debug_print("Password hash generation failed\n");
+		goto cleanup;
+	}
 
-    rc = g_strcmp0(password_hash, new_hash);
+	rc = g_strcmp0(password_hash, new_hash);
 
 cleanup:
-    g_free(salt);
-    g_free(new_hash);
-    g_strfreev(tokens);
-    return rc;
+	g_free(salt);
+	g_free(new_hash);
+	g_strfreev(tokens);
+	return rc;
 
 }
 

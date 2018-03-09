@@ -87,6 +87,7 @@
 #include "foldersel.h"
 #include "update_check.h"
 #include "colorlabel.h"
+#include "masterpassword.h"
 
 #if USE_GPGME
 #  include "rfc2015.h"
@@ -275,6 +276,32 @@ int main(int argc, char *argv[])
 	CHDIR_EXIT_IF_FAIL(get_home_dir(), 1);
 
 	prefs_common_read_config();
+	set_master_password(NULL);
+#if USE_SSL
+	if (prefs_common.use_master_password) {
+		if (prefs_common.master_password_hash != NULL) {
+			if (check_master_password_interactively(3)) {
+				if (alertpanel(_("Master password"),
+							   _("Unable to set master password"),
+							   GTK_STOCK_DISCARD,
+							   GTK_STOCK_QUIT,
+							   NULL) != G_ALERTDEFAULT) {
+					exit(1);
+				}
+			}
+		} else {
+			if (set_master_password_interactively(3) != 0) {
+				if (alertpanel(_("Master password"),
+							   _("Unable to set master password"),
+							   GTK_STOCK_DISCARD,
+							   GTK_STOCK_QUIT,
+							   NULL) != G_ALERTDEFAULT) {
+					exit(1);
+				}
+			}
+		}
+	}
+#endif
 	filter_set_addressbook_func(addressbook_has_address);
 	filter_read_config();
 	prefs_actions_read_config();
@@ -995,6 +1022,7 @@ void app_will_exit(gboolean force)
 
 	/* remove temporary files, close log file, socket cleanup */
 #if USE_SSL
+	unload_master_password();
 	ssl_done();
 #endif
 	syl_cleanup();
