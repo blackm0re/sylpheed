@@ -140,15 +140,12 @@ gint check_master_password_interactively(guint max_attempts) {
 
 	guint cnt;
 
-	if (max_attempts < 1)
-		return 1;
-
-	if (prefs_common.master_password_hash != NULL) {
-		return 1;
-	}
+	g_return_val_if_fail(max_attempts > 0, 1);
+	g_return_val_if_fail(prefs_common.master_password_hash != NULL, 1);
 
 	if (master_password != NULL) {
 		/* password already cached */
+		debug_print("Master password already cached\n");
 		return check_password(master_password,
 							  prefs_common.master_password_hash);
 	}

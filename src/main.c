@@ -280,9 +280,9 @@ int main(int argc, char *argv[])
 #if USE_SSL
 	if (prefs_common.use_master_password) {
 		if (prefs_common.master_password_hash != NULL) {
-			if (check_master_password_interactively(3)) {
+			if (check_master_password_interactively(3) != RC_OK) {
 				if (alertpanel(_("Master password"),
-							   _("Unable to set master password"),
+							   _("Invalid master password"),
 							   GTK_STOCK_DISCARD,
 							   GTK_STOCK_QUIT,
 							   NULL) != G_ALERTDEFAULT) {
@@ -290,7 +290,9 @@ int main(int argc, char *argv[])
 				}
 			}
 		} else {
-			if (set_master_password_interactively(3) != 0) {
+			alertpanel_notice(
+				_("Master password enabled but not set. Setting one now"));
+			if (set_master_password_interactively(3) != RC_OK) {
 				if (alertpanel(_("Master password"),
 							   _("Unable to set master password"),
 							   GTK_STOCK_DISCARD,
