@@ -48,6 +48,15 @@ void unload_master_password(void) {
 
 }
 
+gint mpes_string_prefix(const gchar *str) {
+
+	/* this function will be expanded in time as the format changes */
+	if (g_str_has_prefix(str, "mpes1:"))
+		return 6;
+	return 0;
+
+}
+
 gboolean master_password_active(void) {
 
 #if USE_SSL
@@ -59,38 +68,40 @@ gboolean master_password_active(void) {
 
 }
 
-gchar *decrypt_with_master_password(gchar *str) {
+gchar *decrypt_with_master_password(const gchar *str) {
 
 #if USE_SSL
 	gchar *new_str;
+	gint str_prefix;
 
 	if ((!str) || (!master_password_active()))
-		return str; /* do nothing */
+		return g_strdup(str);
 
+	str_prefix = mpes_string_prefix(str);
 	if (decrypt_data(&new_str,
-					 str,
+					 str + str_prefix,
 					 master_password,
-					 strlen(str)) != RC_OK) {
+					 strlen(str) - str_prefix) != RC_OK) {
 		OPENSSL_cleanse(new_str, strlen(new_str));
 		g_free(new_str);
-		return str;
+		return g_strdup(str);
 	}
 
 	return new_str;
 #else
-	return str; /* do nothing */
+	return g_strdup(str);
 #endif
 
 }
 
-gchar *encrypt_with_master_password(gchar *str) {
+gchar *encrypt_with_master_password(const gchar *str) {
 
 #if USE_SSL
 	gchar *new_str;
 	gint length_encrypted;
 
 	if ((!str) || (!master_password_active()))
-		return str; /* do nothing */
+		return g_strdup(str);
 
 	if (encrypt_data(&new_str,
 					 &length_encrypted,
@@ -101,12 +112,12 @@ gchar *encrypt_with_master_password(gchar *str) {
 					 TRUE) != RC_OK) {
 		OPENSSL_cleanse(new_str, strlen(new_str));
 		g_free(new_str);
-		return str;
+		return g_strdup(str);
 	}
 
 	return new_str;
 #else
-	return str; /* do nothing */
+	return g_strdup(str);
 #endif
 
 }

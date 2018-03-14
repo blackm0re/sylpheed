@@ -438,14 +438,10 @@ Session *pop3_session_new(PrefsAccount *account)
 	session->error_msg = NULL;
 
 	session->user = g_strdup(account->userid);
-	if (master_password_active()) {
-		session->pass = account->passwd ? decrypt_with_master_password(
-			account->passwd) : account->tmp_pass ? g_strdup(
-				account->tmp_pass) : NULL;
-	} else {
-		session->pass = account->passwd ? g_strdup(account->passwd) :
-			account->tmp_pass ? g_strdup(account->tmp_pass) : NULL;
-	}
+	/* TODO:  check format */
+	session->pass = account->passwd ? decrypt_with_master_password(
+		account->passwd) : account->tmp_pass ? g_strdup(
+			account->tmp_pass) : NULL;
 
 	SESSION(session)->server = g_strdup(account->recv_server);
 

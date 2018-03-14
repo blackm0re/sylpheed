@@ -1,6 +1,6 @@
 /*
  * LibSylph -- E-Mail client library
- * Copyright (C) 1999-2006 Hiroyuki Yamamoto
+ * Copyright (C) 1999-2018 Hiroyuki Yamamoto
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -28,9 +28,10 @@ extern gchar *master_password;
 void set_master_password(const char *password);
 gchar *get_master_password(void);
 void unload_master_password(void);
+gint mpes_string_prefix(const gchar *str);
 gboolean master_password_active(void);
-gchar *decrypt_with_master_password(gchar *str);
-gchar *encrypt_with_master_password(gchar *str);
+gchar *decrypt_with_master_password(const gchar *str);
+gchar *encrypt_with_master_password(const gchar *str);
 
 #if USE_SSL
 gint set_master_password_interactively(guint max_attempts);

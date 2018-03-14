@@ -649,17 +649,14 @@ static gint send_message_smtp(PrefsAccount *ac_prefs, GSList *to_list, FILE *fp)
 
 		if (ac_prefs->smtp_userid) {
 			smtp_session->user = g_strdup(ac_prefs->smtp_userid);
-			if (ac_prefs->smtp_passwd)
-				if (master_password_active()) {
-					smtp_session->pass = decrypt_with_master_password(
-						ac_prefs->smtp_passwd);
-				} else {
-					smtp_session->pass = g_strdup(ac_prefs->smtp_passwd);
-				}
-			else if (ac_prefs->tmp_smtp_pass)
+			if (ac_prefs->smtp_passwd) {
+				/* TODO:  check if the format is correct */
+				smtp_session->pass = decrypt_with_master_password(
+					ac_prefs->smtp_passwd);
+			} else if (ac_prefs->tmp_smtp_pass) {
 				smtp_session->pass =
 					g_strdup(ac_prefs->tmp_smtp_pass);
-			else {
+			} else {
 				smtp_session->pass =
 					input_query_password
 						(ac_prefs->smtp_server,

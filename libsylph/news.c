@@ -250,14 +250,12 @@ static Session *news_session_new_for_folder(Folder *folder)
 	ac = folder->account;
 	if (ac->use_nntp_auth && ac->userid && ac->userid[0]) {
 		userid = ac->userid;
-		if (ac->passwd && ac->passwd[0])
-			if (master_password_active()) {
-				passwd = decrypt_with_master_password(ac->passwd);
-			} else {
-				passwd = g_strdup(ac->passwd);
-			}
-		else
+		if (ac->passwd && ac->passwd[0]) {
+			/* TODO:  check if format is correct */
+			passwd = decrypt_with_master_password(ac->passwd);
+		} else {
 			passwd = input_query_password(ac->nntp_server, userid);
+		}
 	}
 
 	if (ac->use_socks && ac->use_socks_for_recv && ac->proxy_host) {
