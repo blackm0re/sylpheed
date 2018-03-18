@@ -707,8 +707,12 @@ static gint imap_session_connect(IMAPSession *session)
 
 	log_message(_("creating IMAP4 connection to %s:%d ...\n"),
 				SESSION(session)->server, SESSION(session)->port);
-    /* TODO:  check of the format is correct | possible memory leak */
-	pass = decrypt_with_master_password(account->passwd);
+	if (master_password_active()) {
+		pass = decrypt_with_master_password(account->passwd);
+		/* a new string is allocated. To be removed ... */
+	} else {
+		pass = account->passwd;
+	}
 	if (!pass)
 		pass = account->tmp_pass;
 	if (!pass) {
@@ -771,14 +775,21 @@ static gint imap_session_connect(IMAPSession *session)
 #endif
 
 	if (!session->authenticated &&
-	    imap_auth(session, account->userid, pass, account->imap_auth_type)
-	    != IMAP_SUCCESS) {
+		imap_auth(session, account->userid, pass, account->imap_auth_type)
+		!= IMAP_SUCCESS) {
+		if (master_password_active()) {
+			g_free(pass); /* remove the decrypted password */
+		}
 		if (account->tmp_pass) {
 			g_free(account->tmp_pass);
 			account->tmp_pass = NULL;
 		}
 		imap_cmd_logout(session);
 		return IMAP_AUTHFAIL;
+	}
+
+	if (master_password_active()) {
+		g_free(pass); /* remove the decrypted password */
 	}
 
 	return IMAP_SUCCESS;

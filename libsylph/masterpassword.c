@@ -78,6 +78,9 @@ gchar *decrypt_with_master_password(const gchar *str) {
 		return g_strdup(str);
 
 	str_prefix = mpes_string_prefix(str);
+	if (!str_prefix)
+		return g_strdup(str);
+
 	if (decrypt_data(&new_str,
 					 str + str_prefix,
 					 master_password,
@@ -97,7 +100,7 @@ gchar *decrypt_with_master_password(const gchar *str) {
 gchar *encrypt_with_master_password(const gchar *str) {
 
 #if USE_SSL
-	gchar *new_str;
+	gchar *new_str, *mpes1_str;
 	gint length_encrypted;
 
 	if ((!str) || (!master_password_active()))
@@ -115,7 +118,11 @@ gchar *encrypt_with_master_password(const gchar *str) {
 		return g_strdup(str);
 	}
 
-	return new_str;
+	mpes1_str = g_strdup_printf("mpes1:%s", new_str);
+	OPENSSL_cleanse(new_str, strlen(new_str));
+	g_free(new_str);
+
+	return mpes1_str;
 #else
 	return g_strdup(str);
 #endif
@@ -163,6 +170,10 @@ gint check_master_password_interactively(guint max_attempts) {
 
 	for (cnt = 0; cnt < max_attempts; ++cnt) {
 		master_password = input_query_master_password();
+		if (master_password == NULL) {
+			/* input canceled or query_master_password_func not set */
+			continue;
+		}
 		if (check_password(master_password,
 						   prefs_common.master_password_hash) == RC_OK) {
 			return RC_OK; /* match */

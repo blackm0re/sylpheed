@@ -34,6 +34,7 @@
 #include "customheader.h"
 #include "account.h"
 #include "utils.h"
+#include "masterpassword.h"
 
 static PrefsAccount tmp_ac_prefs;
 
@@ -205,7 +206,7 @@ PrefsAccount *prefs_account_new(void)
 void prefs_account_read_config(PrefsAccount *ac_prefs, const gchar *label)
 {
 	const gchar *p = label;
-	gchar *rcpath;
+	gchar *rcpath, *tmp_str;
 	gint id;
 
 	g_return_if_fail(ac_prefs != NULL);
@@ -227,6 +228,32 @@ void prefs_account_read_config(PrefsAccount *ac_prefs, const gchar *label)
 		debug_print("converting protocol A_APOP to new prefs.\n");
 		ac_prefs->protocol = A_POP3;
 		ac_prefs->use_apop_auth = TRUE;
+	}
+
+	if (master_password_active()) {
+		if ((ac_prefs->passwd != NULL) &&
+			!mpes_string_prefix(ac_prefs->passwd)) {
+			/* TODO:  Perhaps some prompt? */
+			debug_print(
+				"%s -> converting passwd cleartext to encrypted\n",
+				label);
+			tmp_str = ac_prefs->passwd;
+			ac_prefs->passwd = encrypt_with_master_password(ac_prefs->passwd);
+			g_free(tmp_str);
+		}
+
+		if ((ac_prefs->smtp_passwd != NULL) &&
+			!mpes_string_prefix(ac_prefs->smtp_passwd)) {
+			/* TODO:  Perhaps some prompt? */
+			debug_print(
+				"%s -> converting smtp_passwd from cleartext to encrypted\n",
+				label);
+			tmp_str = ac_prefs->smtp_passwd;
+			ac_prefs->smtp_passwd = encrypt_with_master_password(
+				ac_prefs->smtp_passwd);
+			g_free(tmp_str);
+		}
+
 	}
 
 	custom_header_read_config(ac_prefs);

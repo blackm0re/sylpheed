@@ -180,12 +180,13 @@ gchar *input_dialog_set_new_password(guint max_attempts)
 			_("Input password"),
 			_("Confirm new password"),
 			NULL);
-		if (strcmp(pass1, pass2) == 0) {
-            /* TODO: clear before free? */
+
+		if (pass1 != NULL && pass2 != NULL && strcmp(pass1, pass2) == 0) {
+			/* TODO: clear before free? */
 			g_free(pass2);
 			break;
 		}
-        /* TODO: clear before free? */
+		/* TODO: clear before free? */
 		g_free(pass2);
 		g_free(pass1);
 		pass1 = NULL;
