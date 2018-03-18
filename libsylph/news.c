@@ -251,7 +251,6 @@ static Session *news_session_new_for_folder(Folder *folder)
 	if (ac->use_nntp_auth && ac->userid && ac->userid[0]) {
 		userid = ac->userid;
 		if (ac->passwd && ac->passwd[0]) {
-			/* TODO:  check if format is correct */
 			passwd = decrypt_with_master_password(ac->passwd);
 		} else {
 			passwd = input_query_password(ac->nntp_server, userid);

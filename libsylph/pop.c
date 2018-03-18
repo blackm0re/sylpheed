@@ -438,7 +438,6 @@ Session *pop3_session_new(PrefsAccount *account)
 	session->error_msg = NULL;
 
 	session->user = g_strdup(account->userid);
-	/* TODO:  check format */
 	session->pass = account->passwd ? decrypt_with_master_password(
 		account->passwd) : account->tmp_pass ? g_strdup(
 			account->tmp_pass) : NULL;
