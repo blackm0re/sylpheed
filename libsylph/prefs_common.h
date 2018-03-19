@@ -252,6 +252,7 @@ struct _PrefsCommon
 	/* Master password */
 	gboolean use_master_password;
 	gchar *master_password_hash;
+    guint encrypted_password_min_length;
 
 	/* Interface */
 	gboolean sep_folder;

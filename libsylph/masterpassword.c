@@ -111,7 +111,7 @@ gchar *encrypt_with_master_password(const gchar *str) {
 					 str,
 					 master_password,
 					 strlen(str),
-					 32, /* TODO: to be set in prefs_common */
+					 prefs_common.encrypted_password_min_length,
 					 TRUE) != RC_OK) {
 		OPENSSL_cleanse(new_str, strlen(new_str));
 		g_free(new_str);

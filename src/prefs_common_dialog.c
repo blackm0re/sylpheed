@@ -219,6 +219,7 @@ static struct Privacy {
 #if USE_SSL
 static struct MasterPassword {
 	GtkWidget *checkbtn_use_master_password;
+	GtkWidget *spinbtn_encrypted_password_min_length;
 } master_password;
 #endif
 
@@ -572,6 +573,10 @@ static PrefsUIData ui_data[] = {
 #if USE_SSL
 	{"use_master_password", &master_password.checkbtn_use_master_password,
 	 prefs_set_data_from_toggle, prefs_set_toggle},
+	{"encrypted_password_min_length",
+	 &master_password.spinbtn_encrypted_password_min_length,
+	 prefs_set_data_from_spinbtn,
+	 prefs_set_spinbtn},
 #endif
 
 	/* Interface */
@@ -2669,29 +2674,78 @@ static void prefs_privacy_create(void)
 #if USE_SSL
 static void prefs_master_password_create(void)
 {
-	GtkWidget *vbox1;
-	GtkWidget *vbox2;
+	GtkWidget *vbox_main;
+	GtkWidget *vbox_master_password_options;
+	GtkWidget *vbox_master_password_suboptions;
 	GtkWidget *hbox1;
+	GtkWidget *hbox_spc;
+	GtkWidget *label;
 	GtkWidget *checkbtn_use_master_password;
+	GtkWidget *spinbtn_encrypted_password_min_length;
+	GtkObject *spinbtn_encrypted_password_min_length_adj;
 
-	vbox1 = gtk_vbox_new (FALSE, VSPACING);
-	gtk_widget_show (vbox1);
-	gtk_container_add (GTK_CONTAINER (dialog.notebook), vbox1);
-	gtk_container_set_border_width (GTK_CONTAINER (vbox1), VBOX_BORDER);
+	vbox_main = gtk_vbox_new (FALSE, VSPACING);
+	gtk_widget_show (vbox_main);
+	gtk_container_add (GTK_CONTAINER (dialog.notebook), vbox_main);
+	gtk_container_set_border_width (GTK_CONTAINER (vbox_main), VBOX_BORDER);
 
-	vbox2 = gtk_vbox_new (FALSE, 0);
-	gtk_widget_show (vbox2);
-	gtk_box_pack_start (GTK_BOX (vbox1), vbox2, FALSE, FALSE, 0);
+	vbox_master_password_options = gtk_vbox_new (FALSE, 0);
+	gtk_widget_show (vbox_master_password_options);
+	gtk_box_pack_start (
+		GTK_BOX (vbox_main), vbox_master_password_options, FALSE, FALSE, 0);
 
-	PACK_CHECK_BUTTON (vbox2, checkbtn_use_master_password,
-			   _("Use master password"));
+	PACK_CHECK_BUTTON (vbox_master_password_options,
+					   checkbtn_use_master_password,
+					   _("Use master password"));
+
+	vbox_master_password_suboptions = gtk_vbox_new (FALSE, VSPACING_NARROW);
+	gtk_widget_show (vbox_master_password_suboptions);
+	gtk_box_pack_start (GTK_BOX (vbox_master_password_options),
+						vbox_master_password_suboptions,
+						FALSE,
+						FALSE,
+						0);
 
 	hbox1 = gtk_hbox_new (FALSE, 8);
 	gtk_widget_show (hbox1);
-	gtk_box_pack_start (GTK_BOX (vbox1), hbox1, FALSE, FALSE, 0);
+	gtk_box_pack_start (GTK_BOX (vbox_master_password_suboptions),
+						hbox1,
+						FALSE,
+						FALSE,
+						0);
+
+	hbox_spc = gtk_hbox_new (FALSE, 0);
+	gtk_widget_show (hbox_spc);
+	gtk_box_pack_start (GTK_BOX (hbox1), hbox_spc, FALSE, FALSE, 0);
+	gtk_widget_set_size_request (hbox_spc, 12, -1);
+
+	label = gtk_label_new (_("Min. password length"));
+	gtk_widget_show (label);
+	gtk_box_pack_start (
+		GTK_BOX (hbox1), label, FALSE, FALSE, 0);
+
+	spinbtn_encrypted_password_min_length_adj = gtk_adjustment_new (
+		32, 0, 99, 1, 5, 0);
+	spinbtn_encrypted_password_min_length = gtk_spin_button_new(
+		GTK_ADJUSTMENT (spinbtn_encrypted_password_min_length_adj), 1, 0);
+	gtk_widget_show (spinbtn_encrypted_password_min_length);
+	gtk_box_pack_start (GTK_BOX (hbox1),
+						spinbtn_encrypted_password_min_length,
+						FALSE,
+						FALSE,
+						0);
+	gtk_spin_button_set_numeric (
+		GTK_SPIN_BUTTON (spinbtn_encrypted_password_min_length), TRUE);
+	gtk_widget_set_size_request (spinbtn_encrypted_password_min_length,
+								 64,
+								 -1);
+
+	SET_TOGGLE_SENSITIVITY (checkbtn_use_master_password, hbox1);
 
 	master_password.checkbtn_use_master_password
 		= checkbtn_use_master_password;
+	master_password.spinbtn_encrypted_password_min_length
+		= spinbtn_encrypted_password_min_length;
 }
 #endif /* USE_SSL */
 

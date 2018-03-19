@@ -423,6 +423,8 @@ static PrefParam param[] = {
 	P_BOOL},
 	{"master_password_hash", NULL, &prefs_common.master_password_hash,
 	 P_STRING},
+	{"encrypted_password_min_length", "32",
+	 &prefs_common.encrypted_password_min_length, P_INT},
 
 	/* Interface */
 	{"separate_folder", "FALSE", &prefs_common.sep_folder, P_BOOL},
