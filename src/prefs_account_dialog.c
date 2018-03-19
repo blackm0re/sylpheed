@@ -267,7 +267,7 @@ static PrefsUIData ui_data[] = {
 	{"user_id", &basic.uid_entry,
 	 prefs_set_data_from_entry, prefs_set_entry},
 	{"password", &basic.pass_entry,
-	 prefs_set_data_from_entry, prefs_set_entry},
+	 prefs_set_data_from_epass_entry, prefs_set_entry},
 
 	/* Receive */
 	{"use_apop_auth", &receive.use_apop_chkbtn,
@@ -313,7 +313,7 @@ static PrefsUIData ui_data[] = {
 	{"smtp_user_id", &p_send.smtp_uid_entry,
 	 prefs_set_data_from_entry, prefs_set_entry},
 	{"smtp_password", &p_send.smtp_pass_entry,
-	 prefs_set_data_from_entry, prefs_set_entry},
+	 prefs_set_data_from_epass_entry, prefs_set_entry},
 
 	{"pop_before_smtp", &p_send.pop_bfr_smtp_chkbtn,
 	 prefs_set_data_from_toggle, prefs_set_toggle},

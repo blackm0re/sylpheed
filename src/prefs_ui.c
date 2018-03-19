@@ -36,6 +36,7 @@
 #include "codeconv.h"
 #include "utils.h"
 #include "gtkutils.h"
+#include "masterpassword.h"
 
 typedef enum
 {
@@ -266,6 +267,44 @@ void prefs_set_data_from_entry(PrefParam *pparam)
 		g_warning("Invalid PrefType for GtkEntry widget: %d\n",
 			  pparam->type);
 	}
+}
+
+void prefs_set_data_from_epass_entry(PrefParam *pparam)
+{
+#if USE_SSL
+	PrefsUIData *ui_data;
+	gchar **str;
+	const gchar *entry_str;
+
+	if (!master_password_active()) {
+		prefs_set_data_from_entry(pparam);
+		return;
+	}
+
+	ui_data = (PrefsUIData *)pparam->ui_data;
+	g_return_if_fail(ui_data != NULL);
+	g_return_if_fail(*ui_data->widget != NULL);
+
+	entry_str = gtk_entry_get_text(GTK_ENTRY(*ui_data->widget));
+
+	switch (pparam->type) {
+	case P_STRING:
+		str = (gchar **)pparam->data;
+		g_free(*str);
+		if ((entry_str != NULL) && (!mpes_string_prefix(entry_str))) {
+			debug_print("Encrypting GTK password entry\n");
+			*str = encrypt_with_master_password(entry_str);
+		} else {
+			*str = entry_str[0] ? g_strdup(entry_str) : NULL;
+		}
+		break;
+	default:
+		g_warning("Invalid PrefType for GtkEntry widget: %d\n",
+			  pparam->type);
+	}
+#else
+	prefs_set_data_from_entry(pparam);
+#endif
 }
 
 void prefs_set_entry(PrefParam *pparam)

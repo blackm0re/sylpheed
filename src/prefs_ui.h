@@ -164,6 +164,7 @@ void prefs_set_data_from_dialog	(PrefParam	*param);
 void prefs_set_dialog_to_default(PrefParam	*param);
 
 void prefs_set_data_from_entry	(PrefParam	*pparam);
+void prefs_set_data_from_epass_entry(PrefParam *pparam);
 void prefs_set_entry		(PrefParam	*pparam);
 void prefs_set_data_from_text	(PrefParam	*pparam);
 void prefs_set_text		(PrefParam	*pparam);
