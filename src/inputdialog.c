@@ -44,6 +44,7 @@
 #include "filesel.h"
 #include "prefs_common.h"
 #include "gtkutils.h"
+#include "masterpassword.h"
 #include "utils.h"
 
 #define DIALOG_WIDTH	420
@@ -182,11 +183,12 @@ gchar *input_dialog_set_new_password(guint max_attempts)
 			NULL);
 
 		if (pass1 != NULL && pass2 != NULL && strcmp(pass1, pass2) == 0) {
-			/* TODO: clear before free? */
+			cleanse_buffer(pass2, strlen(pass2));
 			g_free(pass2);
 			break;
 		}
-		/* TODO: clear before free? */
+		cleanse_buffer(pass1, strlen(pass1));
+		cleanse_buffer(pass2, strlen(pass2));
 		g_free(pass2);
 		g_free(pass1);
 		pass1 = NULL;

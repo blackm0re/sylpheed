@@ -27,6 +27,7 @@
 extern gchar *master_password;
 void set_master_password(const char *password);
 gchar *get_master_password(void);
+void cleanse_buffer(void *buf, size_t len);
 void unload_master_password(void);
 gint mpes_string_prefix(const gchar *str);
 gboolean master_password_active(void);

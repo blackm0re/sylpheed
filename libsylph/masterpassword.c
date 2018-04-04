@@ -38,11 +38,17 @@ gchar *get_master_password(void) {
 	return master_password;
 }
 
+void cleanse_buffer(void *buf, size_t len) {
+#if USE_SSL
+	OPENSSL_cleanse(buf, len);
+#else
+	memset(buf, 0, len); /* better than nothing */
+#endif
+}
+
 void unload_master_password(void) {
 
-#if USE_SSL
-	OPENSSL_cleanse(master_password, strlen(master_password));
-#endif
+	cleanse_buffer(master_password, strlen(master_password));
 	g_free(master_password);
 	master_password = NULL;
 
