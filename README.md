@@ -149,16 +149,18 @@ Operation:
 
 - produce a 2 byte string (N) indicating the length of P
 
-- if the length of P < L, produce L - P bytes of random data (R), N = "%02d"
-  if the length of P >= L, N = "-1"
+- generate random padding and set N:
+  - if the length of P < L, produce L - P bytes of random data (R), N = "%02d"
+  - if the length of P >= L, N = "-1"
 
 - produce a hash digest (H): H = SHA_256(N + P + R (if the length of P < L))
 
 - encrypt (E): E = AES_256_CFB_ENCRYPT(H + N + P + R (if the length of P < L), K)
 
 - B = mpes1:BASE64_ENCODE(S + E)
-  example:
-  mpes1:vo7lsIpD7i6byBA6+vlUoF4OVDfEe+aYRRk4FRtfJ2gMY8M43Kj6WfdfgbViIOl83bI4XEc96okhPW5Mla813aAR1gbPjDg0xmCyIbWOiUv/dg==
+
+example:
+mpes1:vo7lsIpD7i6byBA6+vlUoF4OVDfEe+aYRRk4FRtfJ2gMY8M43Kj6WfdfgbViIOl83bI4XEc96okhPW5Mla813aAR1gbPjDg0xmCyIbWOiUv/dg==
 
 
 #### Decryption
@@ -192,8 +194,9 @@ Operation:
 
 - extract the next 2 bytes for the length of P (N): N = D[16 : 17]
 
-- if N == "-1" the password is the remaining bytes of D: P = D[18 :]
-  if N != "-1", extract the next N-bytes from D: P = D[18 : (18 + N)]
+- fetch the plain-text:
+  - if N == "-1" the password is the remaining bytes of D: P = D[18 :]
+  - if N != "-1", extract the next N-bytes from D: P = D[18 : (18 + N)]
 
 
 ### Limitations
