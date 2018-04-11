@@ -11,7 +11,7 @@ Implemented features and fixes not present in the official Sylpheed release
 
 - (feature)
   Support for encrypting and storing encrypted passwords using a master password.
-  See README for more details.
+  Read bellow for more details!
 
 
 Master password
@@ -24,7 +24,7 @@ and is currently in an experimental state.
 Motivation
 ----------
 
-Currently Sylpheed is storing passwords in palin-text. One can always refrain
+Currently Sylpheed is storing passwords in plain-text. One can always refrain
 from storing passwords and let Sylpheed prompt for them, but the more accounts
 one has, the more annoying this becomes.
 
@@ -35,19 +35,19 @@ prompt for the master password.
 Security goals
 --------------
 
-- attacker (A) should not be able to derive the password from the digest
+- attacker (A) should not be able to derive the password from the digest.
 
 - A should not be able to derive the master password even if she has
-  read and write access to the storage
+  read and write access to the storage.
 
 - A should not be able to determine the length of the encrypted password
-  even if she has read and write access to the storage
+  even if she has read and write access to the storage.
 
 - A should not be able to craft an edited password without obtaining the
-  master password
+  master password.
 
-- a warning / prompt should be given if a user accidently types in a "wrong"
-  master password before decryption is initiated
+- a warning / prompt should be given if a user accidentally types in a "wrong"
+  master password before decryption is initiated.
 
 
 Usage in Sylpheed
@@ -55,7 +55,7 @@ Usage in Sylpheed
 
 - backup your Sylpheed profile (often $HOME/.sylpheed-2.0)!
 
-- start Sylpheed and open Configuration -> Common preferences...!
+- start Sylpheed and open "Configuration" -> "Common preferences..."!
 
 - select the "Master password" tab, enable "Use master password" and
   apply the changes!
@@ -63,6 +63,8 @@ Usage in Sylpheed
 - restart Sylpheed (exit and then start Sylpheed again)!
 
 - you will be asked to type and verify a new master password.
+
+- set your new passwords from the "Configuration" -> "Edit accounts..."!
 
 Note:
 Sylpheed will automatically convert existing stored passwords, but it will not
@@ -138,7 +140,7 @@ Encryption
 
 Input:
 
-- palin-text password to be encrypted (P)
+- plain-text password to be encrypted (P)
 
 - plain-text master-password used for key derivation (M)
 
@@ -183,7 +185,7 @@ Input:
 
 Output:
 
-- palin-text password (P)
+- plain-text password (P)
 
 
 Operation:
@@ -218,7 +220,7 @@ Limitations
 
 - currently only the 'password' and 'smtp_password' keys in accountrc
   are encrypted.
-  A machanism that allows for any key and even folders to be encrypted
+  A mechanism that allows for any key and even folders to be encrypted
   should be considered in the future.
 
 - currently it is not possible to select alternative ciphers, hash-functions
@@ -226,6 +228,3 @@ Limitations
 
 - currently it is not possible to change your master password without having to
   set your passwords manually.
-
--- 
-Simeon Simeonov <sgs [ATTT] pichove (DOTTT) org>
