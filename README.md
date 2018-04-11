@@ -1,5 +1,4 @@
-Implemented features and fixes not present in the official Sylpheed release
-===========================================================================
+## Implemented features and fixes not present in the official Sylpheed release
 
 - (fix)
   PGP signature not verified properly when the message has no newline
@@ -14,15 +13,13 @@ Implemented features and fixes not present in the official Sylpheed release
   Read bellow for more details!
 
 
-Master password
-===============
+## Master password
 
 The master password feature is developed by Simeon Simeonov (sgs)
 and is currently in an experimental state.
 
 
-Motivation
-----------
+### Motivation
 
 Currently Sylpheed is storing passwords in plain-text. One can always refrain
 from storing passwords and let Sylpheed prompt for them, but the more accounts
@@ -32,8 +29,7 @@ The goal is to have the passwords stored in a secure way and let Sylpheed only
 prompt for the master password.
 
 
-Security goals
---------------
+### Security goals
 
 - attacker (A) should not be able to derive the password from the digest.
 
@@ -50,8 +46,7 @@ Security goals
   master password before decryption is initiated.
 
 
-Usage in Sylpheed
------------------
+### Usage in Sylpheed
 
 - backup your Sylpheed profile (often $HOME/.sylpheed-2.0)!
 
@@ -72,16 +67,14 @@ touch your backups. You will have to remove all remnants of plain-text
 passwords manually.
 
 
-Choice of cryptographic primitives
-----------------------------------
+### Choice of cryptographic primitives
 
 The primary concern when selecting cryptographic primitives was portability.
 The desire was to go for primitives that are both strong and available in all
 supported production distributions of OpenSSL and LibreSSL.
 
 
-Cipher
-......
+#### Cipher
 
 When it comes to implementation, there are several advantages in using stream
 cipher or a block cipher that behaves like a stream cipher when used in a
@@ -91,8 +84,7 @@ AES-256 operating in CFB was selected for these reasons.
 ChaCha20 should be considered as a replacement in the future.
 
 
-Hash-function
-.............
+#### Hash-function
 
 Hash-functions are used for:
 - key derivation
@@ -118,8 +110,7 @@ Stronger hash-functions like SHA-3 or BLAKE2b can be considered as a
 replacement in the future.
 
 
-Master password digest
-......................
+#### Master password digest
 
 In order to be able to decide whether the user typed a "wrong" master password,
 before attempting to decrypt, Sylpheed stores a digest of the master password
@@ -130,12 +121,10 @@ produces the same digest is found, it will most probably be useless as a
 master-password.
 
 
-Encryption & decryption scheme
-------------------------------
+### Encryption & decryption scheme
 
 
-Encryption
-..........
+#### Encryption
 
 
 Input:
@@ -172,8 +161,7 @@ Operation:
   mpes1:vo7lsIpD7i6byBA6+vlUoF4OVDfEe+aYRRk4FRtfJ2gMY8M43Kj6WfdfgbViIOl83bI4XEc96okhPW5Mla813aAR1gbPjDg0xmCyIbWOiUv/dg==
 
 
-Decryption
-..........
+#### Decryption
 
 
 Input:
@@ -208,8 +196,7 @@ Operation:
   if N != "-1", extract the next N-bytes from D: P = D[18 : (18 + N)]
 
 
-Limitations
------------
+### Limitations
 
 - when Sylpheed starts, the master-password is loaded into memory and remains
   there as long as Sylpheed is running. Currently no strong mechanisms,
