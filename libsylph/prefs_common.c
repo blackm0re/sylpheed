@@ -425,6 +425,9 @@ static PrefParam param[] = {
 	 P_STRING},
 	{"encrypted_password_min_length", "32",
 	 &prefs_common.encrypted_password_min_length, P_INT},
+	{"auto_unload_master_password", "FALSE",
+	 &prefs_common.auto_unload_master_password,
+	 P_BOOL},
 
 	/* Interface */
 	{"separate_folder", "FALSE", &prefs_common.sep_folder, P_BOOL},

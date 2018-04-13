@@ -26,6 +26,7 @@
 #include "prefs_common.h"
 #include "ssl.h"
 #include "utils.h"
+#include "masterpassword.h"
 
 
 gchar *master_password;
@@ -84,8 +85,17 @@ gchar *decrypt_with_master_password(const gchar *str) {
 	gchar *new_str;
 	gint str_prefix;
 
-	if ((!str) || (!master_password_active()))
+	if ((!str) || (!prefs_common.use_master_password))
 		return g_strdup(str);
+
+	if (master_password == NULL) {
+		/* we have empty or auto unloaded master password */
+		if ((!prefs_common.auto_unload_master_password) ||
+			(check_master_password_interactively(3) != RC_OK)) {
+			return g_strdup(str);
+		}
+		debug_print("Reloaded master password\n");
+	}
 
 	str_prefix = mpes_string_prefix(str);
 	if (!str_prefix)
@@ -113,8 +123,17 @@ gchar *encrypt_with_master_password(const gchar *str) {
 	gchar *new_str, *mpes1_str;
 	gint length_encrypted;
 
-	if ((!str) || (!master_password_active()))
+	if ((!str) || (!prefs_common.use_master_password))
 		return g_strdup(str);
+
+	if (master_password == NULL) {
+		/* we have empty or auto unloaded master password */
+		if ((!prefs_common.auto_unload_master_password) ||
+			(check_master_password_interactively(3) != RC_OK)) {
+			return g_strdup(str);
+		}
+		debug_print("Reloaded master password\n");
+	}
 
 	if (encrypt_data(&new_str,
 					 &length_encrypted,

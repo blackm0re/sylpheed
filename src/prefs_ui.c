@@ -31,6 +31,7 @@
 #include <errno.h>
 
 #include "prefs.h"
+#include "prefs_common.h"
 #include "prefs_ui.h"
 #include "menu.h"
 #include "codeconv.h"
@@ -276,8 +277,24 @@ void prefs_set_data_from_epass_entry(PrefParam *pparam)
 	gchar **str;
 	const gchar *entry_str;
 
-	if (!master_password_active()) {
+	/* This is where decrypted passwords are encrypted and stored again */
+
+	/* TODO: A potential exploit is disabling master password and then forcing
+	 * Sylpheed to store the password
+	 */
+
+	/* master_password == NULL for any of the following reasons:
+	 * - use_master_password is not enabled (we just save without encrypting)
+	 * - master_password is auto unloaded (let the encrypt function handle it)
+	 * - undefined reason (refure to store the password)
+	 */
+	if (!prefs_common.use_master_password) {
 		prefs_set_data_from_entry(pparam);
+		return;
+	} else if ((master_password == NULL) &&
+			   (!prefs_common.auto_unload_master_password)) {
+		debug_print("Master password enabled, but not loaded for no "
+					"apparent reason. Not storing\n");
 		return;
 	}
 

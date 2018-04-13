@@ -412,6 +412,13 @@ int main(int argc, char *argv[])
 
 	remote_command_exec();
 
+#if USE_SSL
+	if (prefs_common.auto_unload_master_password && master_password_active()) {
+		debug_print("Auto unloading master password\n");
+		unload_master_password();
+	}
+#endif
+
 #if USE_UPDATE_CHECK
 	if (prefs_common.auto_update_check)
 		update_check(FALSE);

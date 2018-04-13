@@ -219,6 +219,7 @@ static struct Privacy {
 #if USE_SSL
 static struct MasterPassword {
 	GtkWidget *checkbtn_use_master_password;
+	GtkWidget *checkbtn_auto_unload_master_password;
 	GtkWidget *spinbtn_encrypted_password_min_length;
 } master_password;
 #endif
@@ -572,6 +573,9 @@ static PrefsUIData ui_data[] = {
 
 #if USE_SSL
 	{"use_master_password", &master_password.checkbtn_use_master_password,
+	 prefs_set_data_from_toggle, prefs_set_toggle},
+	{"auto_unload_master_password",
+	 &master_password.checkbtn_auto_unload_master_password,
 	 prefs_set_data_from_toggle, prefs_set_toggle},
 	{"encrypted_password_min_length",
 	 &master_password.spinbtn_encrypted_password_min_length,
@@ -2681,6 +2685,7 @@ static void prefs_master_password_create(void)
 	GtkWidget *hbox_spc;
 	GtkWidget *label;
 	GtkWidget *checkbtn_use_master_password;
+	GtkWidget *checkbtn_auto_unload_master_password;
 	GtkWidget *spinbtn_encrypted_password_min_length;
 	GtkObject *spinbtn_encrypted_password_min_length_adj;
 
@@ -2705,6 +2710,11 @@ static void prefs_master_password_create(void)
 						FALSE,
 						FALSE,
 						0);
+
+	PACK_CHECK_BUTTON (vbox_master_password_suboptions,
+					   checkbtn_auto_unload_master_password,
+					   _("Automatically unload master password "
+						 "after session initialization"));
 
 	hbox1 = gtk_hbox_new (FALSE, 8);
 	gtk_widget_show (hbox1);
@@ -2740,10 +2750,13 @@ static void prefs_master_password_create(void)
 								 64,
 								 -1);
 
-	SET_TOGGLE_SENSITIVITY (checkbtn_use_master_password, hbox1);
+	SET_TOGGLE_SENSITIVITY (checkbtn_use_master_password,
+							vbox_master_password_suboptions);
 
 	master_password.checkbtn_use_master_password
 		= checkbtn_use_master_password;
+	master_password.checkbtn_auto_unload_master_password
+		= checkbtn_auto_unload_master_password;
 	master_password.spinbtn_encrypted_password_min_length
 		= spinbtn_encrypted_password_min_length;
 }

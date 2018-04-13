@@ -239,6 +239,7 @@ void prefs_account_read_config(PrefsAccount *ac_prefs, const gchar *label)
 				label);
 			tmp_str = ac_prefs->passwd;
 			ac_prefs->passwd = encrypt_with_master_password(ac_prefs->passwd);
+			cleanse_buffer(tmp_str, strlen(tmp_str));
 			g_free(tmp_str);
 		}
 
@@ -251,6 +252,7 @@ void prefs_account_read_config(PrefsAccount *ac_prefs, const gchar *label)
 			tmp_str = ac_prefs->smtp_passwd;
 			ac_prefs->smtp_passwd = encrypt_with_master_password(
 				ac_prefs->smtp_passwd);
+			cleanse_buffer(tmp_str, strlen(tmp_str));
 			g_free(tmp_str);
 		}
 
