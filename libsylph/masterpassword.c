@@ -48,6 +48,10 @@ void cleanse_buffer(void *buf, size_t len) {
 
 void unload_master_password(void) {
 
+	if (master_password == NULL) {
+		/* not loaded / already unloaded */
+		return;
+	}
 	cleanse_buffer(master_password, strlen(master_password));
 	g_free(master_password);
 	master_password = NULL;
