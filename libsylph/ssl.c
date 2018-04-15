@@ -446,7 +446,7 @@ static gint secure_derive_key(guchar *key,
 	OPENSSL_free(buffer);
 	EVP_MD_CTX_destroy(mdctx);
 
-	return RC_OK;
+	return SSL_RC_OK;
 
 }
 
@@ -472,7 +472,7 @@ gint encrypt_data(gchar **encrypted,
 	EVP_CIPHER_CTX *ctx;
 	EVP_MD_CTX *mdctx;
 
-	rc = RC_ERROR;
+	rc = SSL_RC_ERROR;
 
 	if (length_data < 1) {
 		return -1;
@@ -492,7 +492,7 @@ gint encrypt_data(gchar **encrypted,
 	if (secure_derive_key(key,
 					  key_size,
 					  passphrase,
-						  salt) != RC_OK) {
+						  salt) != SSL_RC_OK) {
 		OPENSSL_cleanse(key, key_size);
 		debug_print("Could not generate secure key\n");
 		goto cleanup;
@@ -594,7 +594,7 @@ gint encrypt_data(gchar **encrypted,
 	*encrypted = g_base64_encode(total_buffer, length_total);
 	*length_encrypted = strlen(*encrypted);
 
-	rc = RC_OK;
+	rc = SSL_RC_OK;
 
 cleanup:
 	/* key */
@@ -740,7 +740,7 @@ gint decrypt_data(gchar **decrypted,
 				(const gchar*) cleartext_buffer,
 				length_hash) != 0) {
 		debug_print("Invalid hash\n");
-		rc = RC_WRONG_HASH_OR_KEY;
+		rc = SSL_RC_WRONG_HASH_OR_KEY;
 		goto cleanup;
 	}
 
@@ -755,7 +755,7 @@ gint decrypt_data(gchar **decrypted,
 	*decrypted = OPENSSL_malloc(length_decrypted);
 	memcpy(*decrypted, data_payload_buffer + 2, length_decrypted);
 
-	rc = RC_OK;
+	rc = SSL_RC_OK;
 
 cleanup:
 
@@ -793,7 +793,7 @@ gint generate_password_hash(gchar **password_hash,
 	if (salt == NULL) {
 		if (RAND_bytes(lsalt, SALT_SIZE) != 1) {
 			debug_print("Random problems...\n");
-			return RC_ERROR;
+			return SSL_RC_ERROR;
 		}
 	} else {
 		memcpy(lsalt, salt, SALT_SIZE);
@@ -827,7 +827,7 @@ gint generate_password_hash(gchar **password_hash,
 	OPENSSL_cleanse(salt_b64, strlen(salt_b64));
 	OPENSSL_free(salt_b64);
 
-	return RC_OK;
+	return SSL_RC_OK;
 
 }
 
@@ -838,7 +838,7 @@ gint check_password(const gchar *password, const gchar *password_hash) {
 	gchar **tokens, *new_hash;
 	gsize salt_length;
 
-	rc = RC_ERROR;
+	rc = SSL_RC_ERROR;
 	tokens = g_strsplit(password_hash,
 						"$",
 						-1);
@@ -858,7 +858,7 @@ gint check_password(const gchar *password, const gchar *password_hash) {
 		goto cleanup;
 	}
 
-	if (generate_password_hash(&new_hash, password, salt) != RC_OK) {
+	if (generate_password_hash(&new_hash, password, salt) != SSL_RC_OK) {
 		debug_print("Password hash generation failed\n");
 		goto cleanup;
 	}

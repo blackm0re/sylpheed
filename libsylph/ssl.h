@@ -37,9 +37,9 @@
 
 #include "socket.h"
 
-#define RC_OK 0
-#define RC_ERROR -1
-#define RC_WRONG_HASH_OR_KEY 1
+#define SSL_RC_OK 0
+#define SSL_RC_ERROR -1
+#define SSL_RC_WRONG_HASH_OR_KEY 1
 
 typedef enum {
 	SSL_METHOD_SSLv23,

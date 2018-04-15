@@ -279,23 +279,28 @@ void prefs_set_data_from_epass_entry(PrefParam *pparam)
 
 	/* This is where decrypted passwords are encrypted and stored again */
 
-	/* TODO: A potential exploit is disabling master password and then forcing
-	 * Sylpheed to store the password
-	 */
-
 	/* master_password == NULL for any of the following reasons:
 	 * - use_master_password is not enabled (we just save without encrypting)
-	 * - master_password is auto unloaded (let the encrypt function handle it)
+	 * - master_password is auto unloaded (prompt for the master password)
 	 * - undefined reason (refure to store the password)
 	 */
 	if (!prefs_common.use_master_password) {
-		prefs_set_data_from_entry(pparam);
+		/* check if use_master_password was enabled when Sylpheed started */
+		if (!master_password_enabled_on_init) {
+			prefs_set_data_from_entry(pparam);
+		}
 		return;
-	} else if ((master_password == NULL) &&
-			   (!prefs_common.auto_unload_master_password)) {
-		debug_print("Master password enabled, but not loaded for no "
-					"apparent reason. Not storing\n");
-		return;
+	} else if (master_password == NULL) {
+        if (!prefs_common.auto_unload_master_password) {
+            debug_print("Master password enabled, but not loaded for no "
+                        "apparent reason. Not storing\n");
+            return;
+        } else {
+            if (check_master_password_interactively(3) != MP_RC_OK) {
+                debug_print("Failed to reload the master password\n");
+                return;
+            }
+        }
 	}
 
 	ui_data = (PrefsUIData *)pparam->ui_data;

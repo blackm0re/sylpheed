@@ -9,7 +9,7 @@
  *
  * This library is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
  * Lesser General Public License for more details.
  *
  * You should have received a copy of the GNU Lesser General Public
@@ -30,6 +30,7 @@
 
 
 gchar *master_password;
+gboolean master_password_enabled_on_init;
 
 void set_master_password(const char *password) {
 	master_password = password;
@@ -91,7 +92,7 @@ gchar *decrypt_with_master_password(const gchar *str) {
 	if (master_password == NULL) {
 		/* we have empty or auto unloaded master password */
 		if ((!prefs_common.auto_unload_master_password) ||
-			(check_master_password_interactively(3) != RC_OK)) {
+			(check_master_password_interactively(3) != MP_RC_OK)) {
 			return g_strdup(str);
 		}
 		debug_print("Reloaded master password\n");
@@ -104,7 +105,7 @@ gchar *decrypt_with_master_password(const gchar *str) {
 	if (decrypt_data(&new_str,
 					 str + str_prefix,
 					 master_password,
-					 strlen(str) - str_prefix) != RC_OK) {
+					 strlen(str) - str_prefix) != MP_RC_OK) {
 		OPENSSL_cleanse(new_str, strlen(new_str));
 		g_free(new_str);
 		return g_strdup(str);
@@ -123,17 +124,13 @@ gchar *encrypt_with_master_password(const gchar *str) {
 	gchar *new_str, *mpes1_str;
 	gint length_encrypted;
 
-	if ((!str) || (!prefs_common.use_master_password))
-		return g_strdup(str);
+	if ((!str) || (!master_password_active()))
+		return NULL;
 
-	if (master_password == NULL) {
-		/* we have empty or auto unloaded master password */
-		if ((!prefs_common.auto_unload_master_password) ||
-			(check_master_password_interactively(3) != RC_OK)) {
-			return g_strdup(str);
-		}
-		debug_print("Reloaded master password\n");
-	}
+	/*
+	 * unlike the decrypt function, here it is up to the caller
+	 * to make sure that auto unloaded master password is handled properly
+	 */
 
 	if (encrypt_data(&new_str,
 					 &length_encrypted,
@@ -141,19 +138,17 @@ gchar *encrypt_with_master_password(const gchar *str) {
 					 master_password,
 					 strlen(str),
 					 prefs_common.encrypted_password_min_length,
-					 TRUE) != RC_OK) {
-		OPENSSL_cleanse(new_str, strlen(new_str));
+					 TRUE) != MP_RC_OK) {
 		g_free(new_str);
-		return g_strdup(str);
+		return NULL;
 	}
 
 	mpes1_str = g_strdup_printf("mpes1:%s", new_str);
-	OPENSSL_cleanse(new_str, strlen(new_str));
 	g_free(new_str);
 
 	return mpes1_str;
 #else
-	return g_strdup(str);
+	return NULL;
 #endif
 
 }
@@ -170,7 +165,7 @@ gint set_master_password_interactively(guint max_attempts) {
 	if (generate_password_hash(
 			&prefs_common.master_password_hash,
 			master_password,
-			NULL) != RC_OK) {
+			NULL) != MP_RC_OK) {
 		/* should not really happen unless buggy code / library */
 		g_free(prefs_common.master_password_hash);
 		prefs_common.master_password_hash = NULL;
@@ -204,8 +199,8 @@ gint check_master_password_interactively(guint max_attempts) {
 			continue;
 		}
 		if (check_password(master_password,
-						   prefs_common.master_password_hash) == RC_OK) {
-			return RC_OK; /* match */
+						   prefs_common.master_password_hash) == MP_RC_OK) {
+			return MP_RC_OK; /* match */
 		}
 		debug_print(_("Wrong master password entered (%d)\n"), cnt);
 		OPENSSL_cleanse(master_password, strlen(master_password));

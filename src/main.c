@@ -280,7 +280,7 @@ int main(int argc, char *argv[])
 #if USE_SSL
 	if (prefs_common.use_master_password) {
 		if (prefs_common.master_password_hash != NULL) {
-			if (check_master_password_interactively(3) != RC_OK) {
+			if (check_master_password_interactively(3) != MP_RC_OK) {
 				if (alertpanel(_("Master password"),
 							   _("Invalid master password"),
 							   GTK_STOCK_DISCARD,
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
 		} else {
 			alertpanel_notice(
 				_("Master password enabled but not set. Setting one now"));
-			if (set_master_password_interactively(3) != RC_OK) {
+			if (set_master_password_interactively(3) != MP_RC_OK) {
 				if (alertpanel(_("Master password"),
 							   _("Unable to set master password"),
 							   GTK_STOCK_DISCARD,
@@ -303,6 +303,16 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+	/* security goal: 
+	 * if the master password is enabled and loaded on init,
+	 * an attacker can potentially set use_master_password - disabled
+	 * afterwards and then force Sylpheed to save account data - the result
+	 * being passwords saved to accountrc in plain-text.
+	 * possible solution:
+	 * Do not allow the passwords to be stored in plain-text if Sylpheed
+	 * was started with use_master_password - enabled.
+	 */
+	master_password_enabled_on_init = prefs_common.use_master_password;
 #endif
 	filter_set_addressbook_func(addressbook_has_address);
 	filter_read_config();

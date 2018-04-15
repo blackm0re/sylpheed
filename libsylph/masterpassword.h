@@ -24,7 +24,12 @@
 #include "config.h"
 #endif
 
+#define MP_RC_OK 0
+#define MP_RC_WRONG_HASH_OR_KEY 1
+#define MP_RC_INVALID_FORMAT 2 /* invalid digest format */
+
 extern gchar *master_password;
+extern gboolean master_password_enabled_on_init; /* m.p. enabled on init? */
 void set_master_password(const char *password);
 gchar *get_master_password(void);
 void cleanse_buffer(void *buf, size_t len);
