@@ -50,6 +50,7 @@ void cleanse_buffer(void *buf, size_t len) {
 
 void unload_master_password(void) {
 
+	debug_print("Unloading master password\n");
 	if (master_password == NULL) {
 		/* not loaded / already unloaded */
 		return;
@@ -57,6 +58,7 @@ void unload_master_password(void) {
 	cleanse_buffer(master_password, strlen(master_password));
 	g_free(master_password);
 	master_password = NULL;
+	debug_print("Master password unloaded\n");
 
 }
 
@@ -105,7 +107,7 @@ gchar *decrypt_with_master_password(const gchar *str) {
 	if (decrypt_data(&new_str,
 					 str + str_prefix,
 					 master_password,
-					 strlen(str) - str_prefix) != MP_RC_OK) {
+					 strlen(str) + 1 - str_prefix) != MP_RC_OK) {
 		OPENSSL_cleanse(new_str, strlen(new_str));
 		g_free(new_str);
 		return g_strdup(str);
@@ -136,7 +138,7 @@ gchar *encrypt_with_master_password(const gchar *str) {
 					 &length_encrypted,
 					 str,
 					 master_password,
-					 strlen(str),
+					 strlen(str) + 1,
 					 prefs_common.encrypted_password_min_length,
 					 TRUE) != MP_RC_OK) {
 		g_free(new_str);

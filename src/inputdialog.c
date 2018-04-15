@@ -159,9 +159,20 @@ gchar *input_dialog_query_password(const gchar *server, const gchar *user)
 
 gchar *input_dialog_query_master_password(void)
 {
-	return input_dialog_with_invisible(_("Input password"),
-									   _("Master password"),
-									   NULL);
+	gchar *mp_input;
+
+	mp_input = input_dialog_with_invisible(_("Input password"),
+										   _("Master password"),
+										   NULL);
+
+	if (prefs_common.use_master_password &&
+		prefs_common.auto_unload_master_password)
+	{
+		g_timeout_add(1000 * 30, unload_master_password, NULL);
+		debug_print("Master password to be unloaded in 30 seconds\n");
+	}
+
+	return mp_input;
 }
 
 gchar *input_dialog_set_new_password(guint max_attempts)
