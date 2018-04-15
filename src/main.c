@@ -426,6 +426,9 @@ int main(int argc, char *argv[])
 	if (prefs_common.auto_unload_master_password && master_password_active()) {
 		debug_print("Auto unloading master password\n");
 		unload_master_password();
+		/* call this function every 10th minute in case a reload took place */
+		/* TODO: Perhaps a more elegant solution could be developed */
+		g_timeout_add(1000 * 60 * 10, unload_master_password, NULL);
 	}
 #endif
 

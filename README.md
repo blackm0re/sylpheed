@@ -42,6 +42,9 @@ prompt for the master password.
 - A should not be able to craft an edited password without obtaining the
   master password.
 
+- A should not be able to compromise the master password or force Sylpheed
+  to store decrypted passwords even if she has access to a running Sylpheed.
+
 - a warning / prompt should be given if a user accidentally types in a "wrong"
   master password before decryption is initiated.
 
@@ -60,6 +63,9 @@ prompt for the master password.
 - you will be asked to type and verify a new master password.
 
 - set your new passwords from the "Configuration" -> "Edit accounts..."!
+
+- select "Automatically unload master password after session initialization"
+  for increased security and decreased convenience.
 
 Note:
 Sylpheed will automatically convert existing stored passwords, but it will not
@@ -201,13 +207,6 @@ Operation:
 
 ### Limitations
 
-- when Sylpheed starts, the master-password is loaded into memory and remains
-  there as long as Sylpheed is running. Currently no strong mechanisms,
-  preventing someone with access to the memory from snatching it,
-  are implemented.
-  "Unloading" the master-password immediately after
-  account-processing (decryption) should be considered in the future.
-
 - currently only the 'password' and 'smtp_password' keys in accountrc
   are encrypted.
   A mechanism that allows for any key and even folders to be encrypted
@@ -217,4 +216,4 @@ Operation:
   and modes of operation (without editing the source code).
 
 - currently it is not possible to change your master password without having to
-  set your passwords manually.
+  (re)set your passwords manually.
