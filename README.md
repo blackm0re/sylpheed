@@ -161,7 +161,7 @@ Operation:
 
 - produce a hash digest (H): H = SHA_256(N + P + R (if the length of P < L))
 
-- encrypt (E): E = AES_256_CFB_ENCRYPT(H + N + P + R (if the length of P < L), K)
+- encrypt (E): E = AES_256_CFB_ENCRYPT(H + N + P + R (if the length of P < L), K, IV=S)
 
 - B = mpes1:BASE64_ENCODE(S + E)
 
@@ -192,7 +192,7 @@ Operation:
 
 - derive the key (K): K = SHA_256(S + M)
 
-- decrypt the rest of B (D): D = AES_256_CFB_DECRYPT(B[16 :], K)
+- decrypt the rest of B (D): D = AES_256_CFB_DECRYPT(B[16 :], K, IV=S)
 
 - extract the first 16 bytes for the hash digest (H): H = D[0 : 15]
 
